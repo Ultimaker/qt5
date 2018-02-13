@@ -1,0 +1,76 @@
+FROM debian:stretch-slim
+
+RUN apt-get update
+RUN apt-get install -y build-essential perl python git wget python3-dev curl
+
+# install libssl-dev to build ssl-enabled qt. otherwise pyqt build will fail
+# (replace by libssl-dev for jessie?)
+RUN apt-get install -y libgl1-mesa-dev libssl1.0-dev libfontconfig1-dev libinput-dev
+
+RUN mkdir /inst
+
+RUN mkdir /src && mkdir /src/qt
+
+ADD . /src/qt
+
+# comment out '-no-xcb' for desktop builds
+RUN cd /src/qt && ./configure \
+#    -no-xcb \      
+#    -debug \
+    -confirm-license \
+    -opensource \
+    -nomake examples \
+    -nomake tests \
+    -no-compile-examples \
+    -prefix "/opt/qt"
+
+RUN cd /src/qt && make -j4
+
+WORKDIR /src/qt
+
+RUN make install
+
+# Install SIP
+RUN mkdir -p /opt/sip && \
+    cd /opt/sip && \
+    curl -L -o sip.tar.gz https://sourceforge.net/projects/pyqt/files/sip/sip-4.19.3/sip-4.19.3.tar.gz && \
+    tar -xf sip.tar.gz && \
+    cd /opt/sip/sip-* && \
+    python3 configure.py && \
+    make && \
+    make install && \
+    cd /opt && \
+    rm -rf /opt/sip
+
+# Install PyQt5
+RUN mkdir -p /opt/pyqt && \
+    cd /opt/pyqt && \
+    curl -L -o pyqt5.tar.gz https://sourceforge.net/projects/pyqt/files/PyQt5/PyQt-5.9/PyQt5_gpl-5.9.tar.gz && \
+    tar -xf pyqt5.tar.gz
+    
+RUN cd /opt/pyqt/PyQt* && \
+    python3 configure.py -c --confirm-license --no-designer-plugin --qml-debug -e QtDBus -e QtCore -e QtGui -e QtQml -e QtQuick -e QtMultimedia -e QtNetwork --qmake=/opt/qt/bin/qmake 
+    # -e QtCore -e QtGui -e QtQml -e QtQuickControls2 -e QtQuickLayouts -e QtMultimedia
+
+RUN cd /opt/pyqt/PyQt* && \
+    make && \
+    make install && \
+    cd /opt && \
+    rm -rf /opt/pyqt
+
+# Check & Go to Workspace
+RUN python3 -c "import PyQt5" && \
+    mkdir -p /opt/workspace
+WORKDIR /opt/workspace
+
+WORKDIR /opt
+ 
+RUN mkdir /opt/qt-ultimaker-5.9.1 && \
+    mkdir /opt/qt-ultimaker-5.9.1/DEBIAN && \
+    mkdir /opt/qt-ultimaker-5.9.1/opt && \
+    cp -R /usr/lib/python3/dist-packages/ /opt/qt-ultimaker-5.9.1/opt/pyqt/ && \
+    cp -R /opt/qt/ /opt/qt-ultimaker-5.9.1/opt/qt/
+
+ADD control /opt/qt-ultimaker-5.9.1/DEBIAN/
+
+RUN dpkg-deb --build qt-ultimaker-5.9.1
