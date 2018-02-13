@@ -11,7 +11,7 @@ RUN mkdir /inst
 
 RUN mkdir /src && mkdir /src/qt
 
-ADD . /src/qt
+ADD * /src/qt/
 
 # comment out '-no-xcb' for desktop builds
 RUN cd /src/qt && ./configure \
