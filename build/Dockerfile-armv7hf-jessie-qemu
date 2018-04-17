@@ -1,0 +1,9 @@
+FROM arm32v7/debian:jessie-slim
+
+COPY resin-io-base-images/debian/armv7hf/jessie/qemu-arm-static /usr/bin/
+
+# Resin-xbuild
+COPY resin-io-base-images/debian/armv7hf/jessie/resin-xbuild /usr/bin/
+RUN ln -s resin-xbuild /usr/bin/cross-build-start \
+	&& ln -s resin-xbuild /usr/bin/cross-build-end
+

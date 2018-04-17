@@ -325,3 +325,6 @@
 	url = https://github.com/qt/qtremoteobjects.git
 	branch = 5.9.4
 	status = preview
+[submodule "build/resin-io-base-images"]
+	path = build/resin-io-base-images
+	url = https://github.com/resin-io-library/base-images
