@@ -1,0 +1,135 @@
+FROM debian:stretch-slim
+
+ENV version=5.9.4-4
+ENV arch=amd64
+ENV name=qt-ultimaker
+
+RUN apt-get update
+RUN apt-get install -y build-essential perl python git wget python3-dev curl
+
+# install libssl-dev to build ssl-enabled qt. otherwise pyqt build will fail
+# (replace by libssl-dev for jessie?)
+RUN apt-get install -y libgl1-mesa-dev libssl1.0-dev libfontconfig1-dev libinput-dev
+
+RUN mkdir /inst
+
+RUN mkdir /src
+RUN mkdir /root/.ssh
+ARG SSH_PRIVATE_KEY
+RUN echo "$SSH_PRIVATE_KEY" > /root/.ssh/id_rsa
+RUN chmod 600 /root/.ssh/id_rsa
+RUN ssh-keyscan github.com > /root/.ssh/known_hosts
+
+# checkout git tag that matches version being built
+RUN cd /src && git clone --recursive -b v${version}-ultimaker git@github.com:Ultimaker/qt5.git qt
+
+# - comment out '-no-xcb' for desktop builds
+# - the modules qtwebengine, qttools, qtquick1 and qtquickcontrols are not skipped for amd64 (compared to arm), because they are qt creator dependencies
+#   it is useful to be able to run qt creator (profiling) on desktop
+RUN cd /src/qt && ./configure \
+#    -debug \
+    -confirm-license \
+    -opensource \
+    -no-compile-examples \
+    -nomake examples \
+    -nomake tests \
+    -nomake tools \
+    -no-cups \
+    -no-sql-db2 \
+    -no-sql-ibase \
+    -no-sql-mysql \
+    -no-sql-oci \
+    -no-sql-odbc \
+    -no-sql-psql \
+    -no-sql-sqlite \
+    -no-sql-sqlite2 \
+    -no-sql-tds \ 
+    -skip qtconnectivity \
+    -skip qtdoc \
+    -skip qtlocation \
+    -skip qtscript \
+    -skip qtsensors \
+    -skip qtwebchannel \
+    -skip qtwebsockets \
+    -skip qtandroidextras \
+    -skip qtactiveqt \
+    -skip qt3d \
+    -skip qtcanvas3d \
+    -skip qtserialport \
+    -skip qtwayland \
+    -skip qtgamepad \
+    -skip qtscxml \
+    -skip qtenginio \
+    -skip qtcharts \
+    -skip qtdatavis3d \
+    -skip qtfeedback \
+    -skip qtspeech \
+    -skip qtnetworkauth \
+    -skip qtpim \
+    -skip qtpurchasing \
+    -skip qtqa \
+    -skip qtremoteobjects \
+    -skip qtwebview \
+    -skip qtsystems \
+    -prefix "/opt/qt"
+
+RUN cd /src/qt && make -j4
+
+WORKDIR /src/qt
+
+RUN make install
+
+# Install SIP
+RUN mkdir -p /opt/sip && \
+    cd /opt/sip && \
+    curl -L -o sip.tar.gz https://sourceforge.net/projects/pyqt/files/sip/sip-4.19.8/sip-4.19.8.tar.gz && \
+    tar -xf sip.tar.gz && \
+    cd /opt/sip/sip-* && \
+    python3 configure.py && \
+    make && \
+    make install && \
+    cd /opt && \
+    rm -rf /opt/sip
+
+# Install PyQt5
+RUN mkdir -p /opt/pyqt && \
+    cd /opt/pyqt && \
+    curl -L -o pyqt5.tar.gz https://sourceforge.net/projects/pyqt/files/PyQt5/PyQt-5.9.2/PyQt5_gpl-5.9.2.tar.gz && \
+    tar -xf pyqt5.tar.gz
+    
+RUN cd /opt/pyqt/PyQt* && \
+    python3 configure.py -c --confirm-license --no-designer-plugin --qml-debug -e QtDBus -e QtCore -e QtGui -e QtQml -e QtQuick -e QtMultimedia -e QtNetwork --qmake=/opt/qt/bin/qmake 
+    # -e QtCore -e QtGui -e QtQml -e QtQuickControls2 -e QtQuickLayouts -e QtMultimedia
+
+RUN cd /opt/pyqt/PyQt* && \
+    make && \
+    make install && \
+    cd /opt && \
+    rm -rf /opt/pyqt
+
+# Check & Go to Workspace
+RUN python3 -c "import PyQt5" && \
+    mkdir -p /opt/workspace
+
+WORKDIR /opt
+ 
+ENV package=${name}-${version}_${arch}
+
+RUN mkdir $package && \
+    mkdir $package/DEBIAN && \
+    mkdir $package/opt && \
+    mkdir $package/opt/qt && \
+    cp -R /usr/lib/python3/dist-packages/ $package/opt/pyqt/ && \
+    cp -R /opt/qt/lib $package/opt/qt/ && \
+    cp -R /opt/qt/plugins $package/opt/qt/ && \
+    cp -R /opt/qt/qml $package/opt/qt/
+
+RUN echo "Package: $name" >> /opt/$package/DEBIAN/control && \
+    echo "Architecture: $arch" >> /opt/$package/DEBIAN/control && \
+    echo "Maintainer: Joost Jager" >> /opt/$package/DEBIAN/control && \
+    echo "Depends: libgl1-mesa-glx,libfontconfig,libpython3.5,libinput10" >> /opt/$package/DEBIAN/control && \
+    echo "Priority: optional" >> /opt/$package/DEBIAN/control && \
+    echo "Version: $version" >> /opt/$package/DEBIAN/control && \
+    echo "Description: Ultimaker-specific build of Qt and PyQt" >> /opt/$package/DEBIAN/control
+
+RUN dpkg-deb --build $package
