@@ -27,7 +27,7 @@ RUN cd /src && git clone --recursive -b v${version}-ultimaker git@github.com:Ult
 # comment out '-no-xcb' for desktop builds
 RUN cd /src/qt && ./configure \
     -no-xcb \      
-#    -debug \
+    -debug \
     -confirm-license \
     -opensource \
     -no-compile-examples \
