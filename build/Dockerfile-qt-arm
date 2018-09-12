@@ -22,7 +22,7 @@ RUN chmod 600 /root/.ssh/id_rsa
 RUN ssh-keyscan github.com > /root/.ssh/known_hosts
 
 # checkout git tag that matches version being built
-RUN cd /src && git clone --recursive -b v${version}-ultimaker git@github.com:Ultimaker/qt5.git qt
+RUN cd /src && git clone --recursive -b MSC_imx6_simple git@github.com:Ultimaker/qt5.git qt
 
 # comment out '-no-xcb' for desktop builds
 RUN cd /src/qt && ./configure \
