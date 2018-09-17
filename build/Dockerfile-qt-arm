@@ -26,7 +26,7 @@ RUN cd /src && git clone --recursive -b MSC_imx6_simple git@github.com:Ultimaker
 
 # comment out '-no-xcb' for desktop builds
 RUN cd /src/qt && ./configure \
-    -no-xcb \      
+    -no-xcb \
     -debug \
     -confirm-license \
     -opensource \
