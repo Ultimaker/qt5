@@ -2,7 +2,7 @@ FROM armv7hf-jessie-qemu
 
 RUN [ "cross-build-start" ]
 
-ENV version=5.9.4-4
+ENV version=5.9.4-5
 ENV arch=armhf
 ENV name=qt-ultimaker
 
