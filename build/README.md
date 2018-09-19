@@ -23,7 +23,7 @@ and copy the file as in the following example:
 
 *~/src/qt5/build$ docker ps -a
 CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS               NAMES\
-7eff686af945        qt-arm:latest       "/usr/bin/qemu-arm..."   4 days ago          Up 4 days                               trusting_spence
+7eff686af945        qt-arm:latest       "/usr/bin/qemu-arm..."   4 days ago          Up 4 days                               trusting_spence\
 ~/src/qt5/build$ docker cp 7eff686af945:/opt/qt-ultimaker-5.9.4-5_armhf.deb .*
 
 
