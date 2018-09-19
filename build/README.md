@@ -18,23 +18,30 @@ CONTAINER=$(docker create qt-amd64) && docker cp $CONTAINER:/opt/qt-ultimaker-5.
 
 (replace architecture and version with the current version)
 
-Alternatively, first not the name of teh .deb file for the docker output, then, outside the docker, identify the CONTAINER_ID
+Alternatively, first note the name of the .deb file for the docker output, then, outside the docker, identify the CONTAINER_ID
 and copy the file as in the following example:
 
-lmyerscough@UM-LAPTOP-456:~/src/qt5/build$ docker ps -a
-CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS               NAMES
+*~/src/qt5/build$ docker ps -a
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS               NAMES\
 7eff686af945        qt-arm:latest       "/usr/bin/qemu-arm..."   4 days ago          Up 4 days                               trusting_spence
-lmyerscough@UM-LAPTOP-456:~/src/qt5/build$ docker cp 7eff686af945:/opt/qt-ultimaker-5.9.4-5_armhf.deb .
+~/src/qt5/build$ docker cp 7eff686af945:/opt/qt-ultimaker-5.9.4-5_armhf.deb .*
 
 
 The reason that everything happens during container build is to take advantage of docker layers during development. Git recursive 
 clone and configure/make is very lengthy. This way it is quicker to test modifications to for example the deb packaging steps 
 at the end of the dockerfile.
 
-A big disadvantage of this approach, however, is that *everything* in the docker has to be rebuilt for even the most trivial of changes.
-You can mitigate this to a large extent by starting a bash shell within the docker, then copy-pasting sections from (e.g.) Dockerfile-qt-arm
-to the command line. In this case, it can help to set up aliases as shown below.
+### Step-by-step building
 
-alias ENV='echo === ENV ===  && export'
-alias WORKDIR='echo === WORKDIR ===  && cd'
-alias RUN='echo === RUN ===  &&'
+A big disadvantage of the 'all-in-one' scripts like 'Dockerfile-qt-arm' is that *everything* in the docker has
+to be rebuilt for even the most trivial of changes.
+You can alleviate this to a large extent by starting a bash shell within the docker...
+ 
+*~/src/qt5/build$ ./run_arm.sh qt-arm*
+ 
+ ...then copy-pasting sections from (e.g.) Dockerfile-qt-arm
+to the command line. It can help to set up aliases as shown below:
+
+*alias ENV=export\
+alias WORKDIR=cd\
+alias RUN=*
