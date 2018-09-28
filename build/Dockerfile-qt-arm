@@ -2,7 +2,7 @@ FROM armv7hf-jessie-qemu
 
 RUN [ "cross-build-start" ]
 
-ENV version=5.9.4-5
+ENV version=5.9.4-9
 ENV arch=armhf
 ENV name=qt-ultimaker
 
@@ -139,4 +139,5 @@ RUN echo "Package: $name" >> /opt/$package/DEBIAN/control && \
 
 RUN dpkg-deb --build $package
 
-RUN [ "cross-build-end" ]  
+RUN [ "cross-build-end" ]
+

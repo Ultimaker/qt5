@@ -33,15 +33,22 @@ at the end of the dockerfile.
 
 ### Step-by-step building
 
-A big disadvantage of the 'all-in-one' scripts like 'Dockerfile-qt-arm' is that *everything* in the docker has
+A big disadvantage of the 'all-in-one' scripts like 'Dockerfile-qt-arm' is that _everything_ in the docker has
 to be rebuilt for even the most trivial of changes.
 You can alleviate this to a large extent by starting a bash shell within the docker...
  
 *~/src/qt5/build$ ./run_arm.sh qt-arm*
  
  ...then copy-pasting sections from (e.g.) Dockerfile-qt-arm
-to the command line. It can help to set up aliases as shown below:
+to the command line. It can be helpful to set up aliases as shown below:
 
 *alias ENV=export\
 alias WORKDIR=cd\
 alias RUN=*
+
+####warning
+
+When re-using a docker image as part of this step-by-step approach, be sure that the intended changes
+really are present in the docker image. This can be done by pushing changes to the repository and then pulling them within the docker
+shell. If the changes are small and experimental, however, you may prefer to copy a patch file - or an individual source
+file - into the docker image via *docker cp...*.
