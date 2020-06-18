@@ -85,7 +85,7 @@ run_linters()
 
 deliver_pkg()
 {
-    cp "${SRC_DIR}/${BUILD_DIR}/"*"deb" "./"
+    cp "${SRC_DIR}/${BUILD_DIR}/"*"deb" "${SRC_DIR}"
 }
 
 run_tests()
