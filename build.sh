@@ -188,6 +188,7 @@ create_debian_package()
     # Add the QT runtime environment source script
     mkdir -p "${DEBIAN_DIR}/usr/local/share/qt5"
     cp "${SRC_DIR}/set_qt5_eglfs_env" "${DEBIAN_DIR}/usr/local/share/qt5"
+    cp "${SRC_DIR}/qt_eglfs_kms_cfg.json" "${DEBIAN_DIR}/usr/local/share/qt5"
     chmod +x "${DEBIAN_DIR}/usr/local/share/qt5/set_qt5_eglfs_env"
 
     # Build the Debian package

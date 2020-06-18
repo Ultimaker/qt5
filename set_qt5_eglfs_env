@@ -18,7 +18,7 @@ export QT_QPA_EGLFS_ALWAYS_SET_MODE=1
 #export WAYLAND_DEBUG=1
 
 # Set the kernel mode setting (KMS) file, this file links the eglfs backend to a display
-export QT_QPA_EGLFS_KMS_CONFIG=/root/eglfs_kms_cfg.json
+export QT_QPA_EGLFS_KMS_CONFIG=/usr/local/share/qt_eglfs_kms_cfg.json
 
 # Set the following when your search paths are not configured correctly and your QT app cannot find libraries or plugins
 #export QT_PLUGIN_PATH=/usr/local/plugins
