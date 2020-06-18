@@ -36,11 +36,11 @@ build()
 
     cd "${BUILD_DIR}"
 
-    ${SRC_DIR}/configure \
+    "${SRC_DIR}/configure" \
         -platform linux-g++-64 \
         -device linux-imx6-g++ \
-        -device-option CROSS_COMPILE=${CROSS_COMPILE} \
-        -sysroot ${SYSROOT} \
+        -device-option CROSS_COMPILE="${CROSS_COMPILE}" \
+        -sysroot "${SYSROOT}" \
         -no-xcb \
         -release \
         -confirm-license \
@@ -103,7 +103,7 @@ build()
         -skip qtremoteobjects \
         -skip qtwebview \
         -skip qtsystems \
-        -extprefix ${DEBIAN_DIR}/
+        -extprefix "${DEBIAN_DIR}/"
 
     make "${MAKEFLAGS}"
     make "${MAKEFLAGS}" install
