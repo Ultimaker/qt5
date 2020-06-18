@@ -125,6 +125,11 @@ create_debian_package()
 
     DEB_PACKAGE="${PACKAGE_NAME}_${RELEASE_VERSION}-${UM_ARCH}_${ARCH}.deb"
 
+    # Add the QT runtime environment source script
+    mkdir -p "${DEBIAN_DIR}/usr/local/share/qt5"
+    cp "${SRC_DIR}/set_qt5_eglfs_env" "${DEBIAN_DIR}/usr/local/share/qt5"
+    chmod +x "${DEBIAN_DIR}/usr/local/share/qt5/set_qt5_eglfs_env"
+
     # Build the Debian package
     fakeroot dpkg-deb --build "${DEBIAN_DIR}" "${BUILD_DIR}/${DEB_PACKAGE}"
 
