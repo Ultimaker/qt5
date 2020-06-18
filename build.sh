@@ -103,7 +103,8 @@ build()
         -skip qtremoteobjects \
         -skip qtwebview \
         -skip qtsystems \
-        -extprefix "${DEBIAN_DIR}/"
+        -extprefix "${DEBIAN_DIR}/" \
+        -prefix "usr/"
 
     make "${MAKEFLAGS}"
     make "${MAKEFLAGS}" install
