@@ -1,8 +1,5 @@
 #!/bin/bash
-# shellcheck disable=SC1117
-
-# This script builds the kernel, kernel modules, device trees and boot scripts for the A20 linux system that we use.
-
+# This script builds the QT libraries with eglfs backend plugins, resulting into a Debian package.
 
 set -eu
 
