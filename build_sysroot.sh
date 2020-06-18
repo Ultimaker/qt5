@@ -28,16 +28,17 @@ build_sysroot()
     # Fix up the symlinks in the sysroot, find all links that start with absolute paths
     #  and replace them with relative paths inside the sysroot.
     cd "${SYSROOT}"
-    for F in $(find -type l)
+    symlinks="$(find . -type l)"
+    for file in ${symlinks}
     do
-        LINK="$(readlink "${F}" || echo '')"
-        if [ ! -z "${LINK}" ]
+        link="$(readlink "${file}" || echo '')"
+        if [ -n "${link}" ]
         then
-            if [ "${LINK:0:1}" == "/" ]
+            if [ "${link:0:1}" == "/" ]
             then
-                if [ -e "${SYSROOT}/${LINK}" ]; then
+                if [ -e "${SYSROOT}/${link}" ]; then
                     rm "${F}"
-                    ln --relative -sf "${SYSROOT}${LINK}" "${F}"
+                    ln --relative -sf "${SYSROOT}${link}" "${file}"
                 fi
             fi
         fi
@@ -60,7 +61,7 @@ build_sysroot()
     echo "You can now use cmake -DCMAKE_TOOLCHAIN_FILE=${TOOLCHAIN_FILE} to build software"
 }
 
-trap "umount -lR ${SYSROOT}/dev || true; umount -lR ${SYSROOT}/proc || true; umount -lR ${SYSROOT}/sys || true" exit
+trap umount -lR "${SYSROOT}/dev" || true; umount -lR "${SYSROOT}/proc" || true; umount -lR "${SYSROOT}/sys" || true exit
 
 
 if [ ! "$(id -u)" -eq 0 ]; then

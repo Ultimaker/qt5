@@ -17,8 +17,9 @@ DOCKER_WORK_DIR="/docker_workdir"
 BUILD_DIR_TEMPLATE="_build"
 BUILD_DIR="${BUILD_DIR_TEMPLATE}"
 
-
+run_linters="yes"
 run_env_check="yes"
+
 
 update_docker_image()
 {
@@ -57,6 +58,16 @@ update_modules()
     done
 }
 
+run_shellcheck()
+{
+    docker run \
+        --rm \
+        -v "$(pwd):${DOCKER_WORK_DIR}" \
+        -w "${DOCKER_WORK_DIR}" \
+        "registry.hub.docker.com/koalaman/shellcheck-alpine:stable" \
+        "docker_env/run_shellcheck.sh"
+}
+
 env_check()
 {
     run_in_docker "./docker_env/buildenv_check.sh"
@@ -67,7 +78,12 @@ run_build()
     run_in_docker "./build.sh" "${@}"
 }
 
-deliver_pkg()git
+run_linters()
+{
+    run_shellcheck
+}
+
+deliver_pkg()
 {
     cp "${BUILD_DIR}/"*"deb" "./"
 }
@@ -88,7 +104,7 @@ usage()
     echo "Run './build.sh -h' for more information."
 }
 
-while getopts ":ch" options; do
+while getopts ":cClh" options; do
     case "${options}" in
     c)
         run_build "${@}"
@@ -100,6 +116,9 @@ while getopts ":ch" options; do
     h)
         usage
         exit 0
+        ;;
+    l)
+        run_linters="no"
         ;;
     :)
         echo "Option -${OPTARG} requires an argument."
@@ -122,6 +141,10 @@ update_docker_image
 
 if [ "${run_env_check}" = "yes" ]; then
     env_check
+fi
+
+if [ "${run_linters}" = "yes" ]; then
+    run_linters
 fi
 
 update_modules
