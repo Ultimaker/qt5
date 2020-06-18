@@ -35,10 +35,24 @@ build()
 
     "${SRC_DIR}/configure" \
         -platform linux-g++-64 \
-        -device linux-imx6-g++ \
+        -device ultimaker-linux-imx6-g++ \
         -device-option CROSS_COMPILE="${CROSS_COMPILE}" \
         -sysroot "${SYSROOT}" \
-        -no-xcb \
+        -prefix /usr \
+        -bindir /usr/bin \
+        -libdir /usr/lib \
+        -datadir /usr/share \
+        -sysconfdir /etc \
+        -docdir /usr/share/doc \
+        -headerdir /usr/include \
+        -archdatadir /usr/lib \
+        -libexecdir /usr/lib/libexec \
+        -plugindir /usr/lib/plugins \
+        -qmldir /usr/lib/qml \
+        -translationdir /usr/share/translations \
+        -testsdir /usr/share/tests \
+        -examplesdir /usr/share/examples \
+        -extprefix "${DEBIAN_DIR}" \
         -release \
         -confirm-license \
         -opensource \
@@ -46,6 +60,7 @@ build()
         -pkg-config \
         -shared \
         -silent \
+        -compile-examples \
         -no-pch \
         -no-rpath \
         -eglfs \
@@ -57,8 +72,6 @@ build()
         -xkbcommon \
         -no-directfb \
         -no-linuxfb \
-        -no-compile-examples \
-        -nomake examples \
         -nomake tests \
         -nomake tools \
         -no-cups \
@@ -71,6 +84,8 @@ build()
         -no-sql-sqlite \
         -no-sql-sqlite2 \
         -no-sql-tds \
+        -libudev \
+        -widgets \
         -skip qtconnectivity \
         -skip qtdoc \
         -skip qtlocation \
@@ -82,8 +97,6 @@ build()
         -skip qtandroidextras \
         -skip qtactiveqt \
         -skip qttools \
-        -skip qt3d \
-        -skip qtcanvas3d \
         -skip qtserialport \
         -skip qtwayland \
         -skip qtgamepad \
@@ -95,13 +108,12 @@ build()
         -skip qtnetworkauth \
         -skip qtpim \
         -skip qtpurchasing \
-        -skip qtqa \
         -skip qtquickcontrols \
         -skip qtremoteobjects \
         -skip qtwebview \
         -skip qtsystems \
-        -extprefix "${DEBIAN_DIR}/" \
-        -prefix "usr/"
+        -skip qtwebview
+
 
     make "${MAKEFLAGS}"
     make "${MAKEFLAGS}" install
@@ -109,6 +121,57 @@ build()
     echo "Finished building."
 }
 
+
+#build_sip()
+#{
+#    cd "${BUILD_DIR}"
+##    curl -L -o sip.tar.gz https://sourceforge.net/projects/pyqt/files/sip/sip-4.19.8/sip-4.19.8.tar.gz
+#    curl -L -o sip.tar.gz https://www.riverbankcomputing.com/static/Downloads/sip/sip-5.3.1.dev2006052202.tar.gz
+#    tar -xf sip.tar.gz
+#    sip-*
+#    python3 configure.py
+#    make
+#    make install
+#}
+
+#build_pyqt()
+#{
+#    cd "${BUILD_DIR}"
+#    curl -L -o "pyqt${RELEASE_VERSION}.tar.gz" https://www.riverbankcomputing.com/static/Downloads/PyQt5/curl -L -o "pyqt${RELEASE_VERSION}.tar.gz/PyQt5_gpl-${RELEASE_VERSION}.tar.gz"
+#    tar -xf "pyqt${RELEASE_VERSION}.tar.gz"
+#    cd PyQt*
+#    python3 configure.py -h
+#    python3 configure.py -c --confirm-license --no-designer-plugin --qml-debug -e QtDBus -e QtCore -e QtGui -e QtQml \
+#        -e QtQuick -e QtMultimedia -e QtNetwork --qmake="${BUILD_DIR}/qtbase/bin/qmake"
+#    # -e QtCore -e QtGui -e QtQml -e QtQuickControls2 -e QtQuickLayouts -e QtMultimedia
+#    make
+#    make install
+
+# Check & Go to Workspace
+#RUN python3 -c "import PyQt5" && \
+#    mkdir -p /opt/workspace
+#
+#WORKDIR /opt
+
+#RUN mkdir $package && \
+#    mkdir $package/DEBIAN && \
+#    mkdir $package/opt && \
+#    mkdir $package/opt/qt && \
+#    cp -R /usr/lib/python3/dist-packages/ $package/opt/pyqt/ && \
+#    cp -R /opt/qt/lib $package/opt/qt/ && \
+#    cp -R /opt/qt/plugins $package/opt/qt/ && \
+#    cp -R /opt/qt/qml $package/opt/qt/
+#
+#RUN echo "Package: $name" >> /opt/$package/DEBIAN/control && \
+#    echo "Architecture: $arch" >> /opt/$package/DEBIAN/control && \
+#    echo "Maintainer: Joost Jager" >> /opt/$package/DEBIAN/control && \
+#    echo "Depends: libgl1-mesa-glx,libfontconfig,libpython3.4,libinput5" >> /opt/$package/DEBIAN/control && \
+#    echo "Priority: optional" >> /opt/$package/DEBIAN/control && \
+#    echo "Version: $version" >> /opt/$package/DEBIAN/control && \
+#    echo "Description: Ultimaker-specific build of Qt and PyQt" >> /opt/$package/DEBIAN/control
+
+#RUN dpkg-deb --build $package
+#}
 
 create_debian_package()
 {
