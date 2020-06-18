@@ -37,7 +37,7 @@ build_sysroot()
             if [ "${link:0:1}" == "/" ]
             then
                 if [ -e "${SYSROOT}/${link}" ]; then
-                    rm "${F}"
+                    rm "${file}"
                     ln --relative -sf "${SYSROOT}${link}" "${file}"
                 fi
             fi
