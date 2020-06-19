@@ -29,7 +29,7 @@ build()
         rm -rf "${DEBIAN_DIR}"
     fi
 
-    mkdir -p "${DEBIAN_DIR}"
+    mkdir -p "${DEBIAN_DIR}/usr"
 
     cd "${BUILD_DIR}"
 
@@ -51,7 +51,6 @@ build()
         -qmldir /usr/lib/qml \
         -translationdir /usr/share/translations \
         -testsdir /usr/share/tests \
-        -examplesdir /usr/share/examples \
         -extprefix "${DEBIAN_DIR}" \
         -release \
         -confirm-license \
@@ -60,7 +59,6 @@ build()
         -pkg-config \
         -shared \
         -silent \
-        -compile-examples \
         -no-pch \
         -no-rpath \
         -eglfs \
@@ -114,6 +112,9 @@ build()
         -skip qtsystems \
         -skip qtwebview
 
+# Add the following to build the examples
+#        -compile-examples \
+#        -examplesdir /usr/share/examples \
 
     make "${MAKEFLAGS}"
     make "${MAKEFLAGS}" install
