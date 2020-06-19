@@ -98,6 +98,7 @@ usage()
     echo "Usage: ${0} [OPTIONS]"
     echo "  -c   Clean the workspace"
     echo "  -C   Skip run of build environment checks"
+    echo "  -l   Skip running the shellcheck linter"
     echo "  -h   Print usage"
     echo
     echo "Other options will be passed on to build.sh"
