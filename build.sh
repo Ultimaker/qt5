@@ -12,7 +12,8 @@ BUILD_DIR="${SRC_DIR}/${BUILD_DIR_TEMPLATE}"
 
 # Debian package information
 PACKAGE_NAME="${PACKAGE_NAME:-qt-ultimaker}"
-RELEASE_VERSION="${RELEASE_VERSION:-5.12.3}"
+QT_VERSION="5.12.3"
+RELEASE_VERSION="${RELEASE_VERSION:-${QT_VERSION}}"
 
 DEBIAN_DIR="${BUILD_DIR}/debian"
 CROSS_COMPILE="arm-linux-gnueabihf-"
@@ -29,7 +30,7 @@ build()
         rm -rf "${DEBIAN_DIR}"
     fi
 
-    mkdir -p "${DEBIAN_DIR}/usr"
+    mkdir -p "${DEBIAN_DIR}/usr/local"
 
     cd "${BUILD_DIR}"
 
@@ -38,20 +39,7 @@ build()
         -device ultimaker-linux-imx6-g++ \
         -device-option CROSS_COMPILE="${CROSS_COMPILE}" \
         -sysroot "${SYSROOT}" \
-        -prefix /usr \
-        -bindir /usr/bin \
-        -libdir /usr/lib \
-        -datadir /usr/share \
-        -sysconfdir /etc \
-        -docdir /usr/share/doc \
-        -headerdir /usr/include \
-        -archdatadir /usr/lib \
-        -libexecdir /usr/lib/libexec \
-        -plugindir /usr/lib/plugins \
-        -qmldir /usr/lib/qml \
-        -translationdir /usr/share/translations \
-        -testsdir /usr/share/tests \
-        -extprefix "${DEBIAN_DIR}" \
+        -extprefix "${DEBIAN_DIR}/usr/local" \
         -release \
         -confirm-license \
         -opensource \
@@ -72,6 +60,8 @@ build()
         -no-linuxfb \
         -nomake tests \
         -nomake tools \
+        -nomake examples \
+        -no-compile-examples \
         -no-cups \
         -no-sql-db2 \
         -no-sql-ibase \
@@ -106,7 +96,6 @@ build()
         -skip qtnetworkauth \
         -skip qtpim \
         -skip qtpurchasing \
-        -skip qtquickcontrols \
         -skip qtremoteobjects \
         -skip qtwebview \
         -skip qtsystems \
