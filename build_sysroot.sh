@@ -55,8 +55,8 @@ build_sysroot()
     # TODO: These should also come from cloudsmith and have a correct version number
     cp "${TOOLS_DIR}/"*".deb" "${SYSROOT}"
 
-    chroot "${SYSROOT}" /usr/bin/dpkg -i /libdrm_999.999.999-imx6dl_armhf.deb
-    chroot "${SYSROOT}" /usr/bin/dpkg -i /mesa_999.999.999-imx6dl_armhf.deb
+    chroot "${SYSROOT}" /usr/bin/dpkg -i /libdrm-ultimaker_2.4.102-imx6dl_armhf.deb
+    chroot "${SYSROOT}" /usr/bin/dpkg -i /mesa-ultimaker_19.0.1-imx6dl_armhf.deb
 
     echo "Finished building sysroot in: ${SYSROOT}"
     echo "You can now use cmake -DCMAKE_TOOLCHAIN_FILE=${TOOLCHAIN_FILE} to build software"
