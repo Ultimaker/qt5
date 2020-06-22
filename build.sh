@@ -1,7 +1,7 @@
 #!/bin/bash
 # This script builds the QT libraries with eglfs backend plugins, resulting into a Debian package.
 
-set -eu
+set -eux
 
 ARCH="armhf"
 UM_ARCH="imx6dl" # Empty string, or sun7i for R1, or imx6dl for R2
@@ -101,7 +101,7 @@ build()
         -skip qtsystems \
         -skip qtwebview
 
-# Add the following to build the examples
+# Add the following to build the examples and remove the -nomake-examples
 #        -compile-examples \
 #        -examplesdir /usr/share/examples \
 
@@ -111,57 +111,25 @@ build()
     echo "Finished building."
 }
 
+build_pyqt()
+{
+    mount --bind /dev "${SYSROOT}/dev"
+    mount --bind /tmp "${SYSROOT}/tmp"
+    mount --bind /proc "${SYSROOT}/proc"
+    touch "${SYSROOT}/etc/resolv.conf"
+    mount --bind /etc/resolv.conf "${SYSROOT}/etc/resolv.conf"
 
-#build_sip()
-#{
-#    cd "${BUILD_DIR}"
-##    curl -L -o sip.tar.gz https://sourceforge.net/projects/pyqt/files/sip/sip-4.19.8/sip-4.19.8.tar.gz
-#    curl -L -o sip.tar.gz https://www.riverbankcomputing.com/static/Downloads/sip/sip-5.3.1.dev2006052202.tar.gz
-#    tar -xf sip.tar.gz
-#    sip-*
-#    python3 configure.py
-#    make
-#    make install
-#}
+    cp "${BUILD_DIR}/qt-ultimaker_5.12.3-imx6dl_armhf.deb" "${SYSROOT}"
+    chroot "${SYSROOT}" /bin/sh -c "/usr/bin/dpkg -i /qt-ultimaker_5.12.3-imx6dl_armhf.deb"
 
-#build_pyqt()
-#{
-#    cd "${BUILD_DIR}"
-#    curl -L -o "pyqt${RELEASE_VERSION}.tar.gz" https://www.riverbankcomputing.com/static/Downloads/PyQt5/curl -L -o "pyqt${RELEASE_VERSION}.tar.gz/PyQt5_gpl-${RELEASE_VERSION}.tar.gz"
-#    tar -xf "pyqt${RELEASE_VERSION}.tar.gz"
-#    cd PyQt*
-#    python3 configure.py -h
-#    python3 configure.py -c --confirm-license --no-designer-plugin --qml-debug -e QtDBus -e QtCore -e QtGui -e QtQml \
-#        -e QtQuick -e QtMultimedia -e QtNetwork --qmake="${BUILD_DIR}/qtbase/bin/qmake"
-#    # -e QtCore -e QtGui -e QtQml -e QtQuickControls2 -e QtQuickLayouts -e QtMultimedia
-#    make
-#    make install
+    cp /etc/ca-certificates.conf "${SYSROOT}/etc/ca-certificates.conf"
+    chroot "${SYSROOT}" /bin/sh -c "/usr/bin/pip3 install pip install PyQt5-sip PyQt5 --trusted-host pypi.org --trusted-host files.pythonhosted.org --trusted-host pypi.python.org"
 
-# Check & Go to Workspace
-#RUN python3 -c "import PyQt5" && \
-#    mkdir -p /opt/workspace
-#
-#WORKDIR /opt
-
-#RUN mkdir $package && \
-#    mkdir $package/DEBIAN && \
-#    mkdir $package/opt && \
-#    mkdir $package/opt/qt && \
-#    cp -R /usr/lib/python3/dist-packages/ $package/opt/pyqt/ && \
-#    cp -R /opt/qt/lib $package/opt/qt/ && \
-#    cp -R /opt/qt/plugins $package/opt/qt/ && \
-#    cp -R /opt/qt/qml $package/opt/qt/
-#
-#RUN echo "Package: $name" >> /opt/$package/DEBIAN/control && \
-#    echo "Architecture: $arch" >> /opt/$package/DEBIAN/control && \
-#    echo "Maintainer: Joost Jager" >> /opt/$package/DEBIAN/control && \
-#    echo "Depends: libgl1-mesa-glx,libfontconfig,libpython3.4,libinput5" >> /opt/$package/DEBIAN/control && \
-#    echo "Priority: optional" >> /opt/$package/DEBIAN/control && \
-#    echo "Version: $version" >> /opt/$package/DEBIAN/control && \
-#    echo "Description: Ultimaker-specific build of Qt and PyQt" >> /opt/$package/DEBIAN/control
-
-#RUN dpkg-deb --build $package
-#}
+    umount -lR "${SYSROOT}/dev"
+    umount -lR "${SYSROOT}/proc"
+    umount -lR "${SYSROOT}/sys"
+    umount -lR "${SYSROOT}/etc/resolv.conf"
+}
 
 create_debian_package()
 {
@@ -173,12 +141,20 @@ create_debian_package()
         -e 's|@RELEASE_VERSION@|'"${RELEASE_VERSION}-${UM_ARCH}"'|g' \
         "${SRC_DIR}/debian/control.in" > "${DEBIAN_DIR}/DEBIAN/control"
 
+	#echo "Depends: libgl1-mesa-glx,libfontconfig,libpython3.4,libinput5"
+
     DEB_PACKAGE="${PACKAGE_NAME}_${RELEASE_VERSION}-${UM_ARCH}_${ARCH}.deb"
+    
+    # Copy QtPy and Qt
+    cp -R "${SYSROOT}/usr/lib/python3/dist-packages/" 	"${DEBIAN_DIR}/usr/local/pyqt/"
+    cp -R "${SYSROOT}/opt/qt/lib" 			"${DEBIAN_DIR}/usr/local/"
+    cp -R "${SYSROOT}/opt/qt/plugins" 			"${DEBIAN_DIR}/usr/local/"
+    cp -R "${SYSROOT}/opt/qt/qml" 			"${DEBIAN_DIR}/usr/local/"
 
     # Add the QT runtime environment source script
     mkdir -p "${DEBIAN_DIR}/usr/local/share/qt5"
-    cp "${SRC_DIR}/set_qt5_eglfs_env" "${DEBIAN_DIR}/usr/local/share/qt5"
-    cp "${SRC_DIR}/qt_eglfs_kms_cfg.json" "${DEBIAN_DIR}/usr/local/share/qt5"
+    cp "${SRC_DIR}/set_qt5_eglfs_env" 			"${DEBIAN_DIR}/usr/local/share/qt5"
+    cp "${SRC_DIR}/qt_eglfs_kms_cfg.json" 		"${DEBIAN_DIR}/usr/local/share/qt5"
     chmod +x "${DEBIAN_DIR}/usr/local/share/qt5/set_qt5_eglfs_env"
 
     # Build the Debian package
@@ -231,15 +207,17 @@ if [ "${#}" -gt 1 ]; then
 fi
 
 if [ "${#}" -eq 0 ]; then
-    build
-    create_debian_package
+#    build
+    build_pyqt
+#    create_debian_package
     exit 0
 fi
 
 case "${1-}" in
     deb)
-        build
-        create_debian_package
+#        build
+#        build_pyqt
+#        create_debian_package
         ;;
     *)
         echo "Error, unknown build option given"

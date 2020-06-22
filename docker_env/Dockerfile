@@ -6,7 +6,7 @@ LABEL Maintainer="software-embedded@ultimaker.com" \
 
 RUN apt-get update && \
     apt-get install -y \
-    build-essential curl perl pkg-config crossbuild-essential-armhf python python3 multistrap \
+    build-essential curl crossbuild-essential-armhf multistrap perl pkg-config python python3 python3-distutils python3-pip \
     && \
     apt-get clean && \
     rm -rf /var/cache/apt/*
