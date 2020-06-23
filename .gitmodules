@@ -1,6 +1,6 @@
 [submodule "qtbase"]
 	path = qtbase
-	url = ../qtbase.git
+	url = http://code.qt.io/qt/qtbase.git
 	branch = 5.12.3
 	status = essential
 [submodule "qtsvg"]
@@ -13,7 +13,7 @@
 	depends = qtbase
 	recommends = qtsvg
 	path = qtdeclarative
-	url = ../qtdeclarative.git
+	url = http://code.qt.io/qt/qtdeclarative.git
 	branch = 5.12.3
 	status = essential
 [submodule "qtactiveqt"]
