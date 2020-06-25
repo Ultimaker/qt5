@@ -1,0 +1,26 @@
+#!/bin/sh
+
+# Source this script to setup a qt application run environment with eglfs backend.
+
+# if this is not set an error is thrown: Could not queue DRM page.
+export QT_QPA_EGLFS_ALWAYS_SET_MODE=1
+
+# Set the following for debugging when runnning a QT application, it makes all the other debug settings redundant.
+#export QT_DEBUG_PLUGINS=1
+
+# Set EGL and Mesa debug modes, this is usefull when running EGL contecxt without QT
+#export EGL_LOG_LEVEL=debug
+#export MESA_DEBUG=1
+#export QT_QPA_EGLFS_DEBUG=1
+
+# Other debug environment settings
+#export LIBGL_DEBUG=1
+#export WAYLAND_DEBUG=1
+
+# Set the kernel mode setting (KMS) file, this file links the eglfs backend to a display
+export QT_QPA_EGLFS_KMS_CONFIG=/usr/local/share/qt5/qt_eglfs_kms_cfg.json
+
+# Set the following when your search paths are not configured correctly and your QT app cannot find libraries or plugins
+#export QT_PLUGIN_PATH=/usr/local/plugins
+#export LD_LIBRARY_PATH=//usr/local/lib
+

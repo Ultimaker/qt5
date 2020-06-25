@@ -1,0 +1,8 @@
+Package: @PACKAGE_NAME@
+Version: @RELEASE_VERSION@
+Architecture: @ARCH@
+Maintainer: Ultimaker <info@ultimaker.com>
+Section: graphics
+Priority: optional
+Homepage: https://www.qt.io/
+Description: Qt is a free and open-source widget toolkit for creating graphical user interfaces.
