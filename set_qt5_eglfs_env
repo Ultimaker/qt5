@@ -18,9 +18,14 @@ export QT_QPA_EGLFS_ALWAYS_SET_MODE=1
 #export WAYLAND_DEBUG=1
 
 # Set the kernel mode setting (KMS) file, this file links the eglfs backend to a display
-export QT_QPA_EGLFS_KMS_CONFIG=/usr/local/share/qt5/qt_eglfs_kms_cfg.json
+export QT_QPA_EGLFS_KMS_CONFIG=/etc/qt5/qt_eglfs_kms_cfg.json
 
 # Set the following when your search paths are not configured correctly and your QT app cannot find libraries or plugins
-#export QT_PLUGIN_PATH=/usr/local/plugins
-#export LD_LIBRARY_PATH=//usr/local/lib
+export QT_PLUGIN_PATH=/opt/qt/plugins/:/opt/pyqt/
+export QT_QPA_PLATFORM_PLUGIN_PATH=/opt/qt/plugins/platforms/:/opt/pyqt/
+export LD_LIBRARY_PATH=/opt/qt/lib:/opt/pyqt/
 
+export QML2_IMPORT_PATH=/opt/qt/qml/:/usr/share/okuda/Okuda/QmlPlugin
+export PYTHONPATH=${PYTHONPATH}:/opt/pyqt:/opt/pyqt/PyQt5
+
+export QT_QPA_FONTDIR=/usr/share/fonts/truetype/noto
