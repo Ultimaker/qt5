@@ -1,7 +1,7 @@
 #!/bin/bash
 # This script builds the QT libraries with eglfs backend plugins, resulting into a Debian package.
 
-set -eux
+set -eu
 
 ARCH="armhf"
 UM_ARCH="imx6dl" # Empty string, or sun7i for R1, or imx6dl for R2
