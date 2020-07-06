@@ -6,26 +6,26 @@
 export QT_QPA_EGLFS_ALWAYS_SET_MODE=1
 
 # Set the following for debugging when runnning a QT application, it makes all the other debug settings redundant.
-#export QT_DEBUG_PLUGINS=1
+export QT_DEBUG_PLUGINS=1
 
 # Set EGL and Mesa debug modes, this is usefull when running EGL contecxt without QT
-#export EGL_LOG_LEVEL=debug
-#export MESA_DEBUG=1
-#export QT_QPA_EGLFS_DEBUG=1
+export EGL_LOG_LEVEL=debug
+export MESA_DEBUG=1
+export QT_QPA_EGLFS_DEBUG=1
 
 # Other debug environment settings
-#export LIBGL_DEBUG=1
+export LIBGL_DEBUG=1
 #export WAYLAND_DEBUG=1
 
 # Set the kernel mode setting (KMS) file, this file links the eglfs backend to a display
 export QT_QPA_EGLFS_KMS_CONFIG=/etc/qt5/qt_eglfs_kms_cfg.json
 
-# Set the following when your search paths are not configured correctly and your QT app cannot find libraries or plugins
-export QT_PLUGIN_PATH=/opt/qt/plugins/:/opt/pyqt/
-export QT_QPA_PLATFORM_PLUGIN_PATH=/opt/qt/plugins/platforms/:/opt/pyqt/
-export LD_LIBRARY_PATH=/opt/qt/lib:/opt/pyqt/
-
+# Set the following variables for QT PyQt5 be able to find all the libraries
+export QT_PLUGIN_PATH=/opt/qt/plugins/
+export QT_QPA_PLATFORM_PLUGIN_PATH=/opt/qt/plugins/platforms/
+export LD_LIBRARY_PATH=/opt/qt/lib
 export QML2_IMPORT_PATH=/opt/qt/qml/:/usr/share/okuda/Okuda/QmlPlugin
 export PYTHONPATH=${PYTHONPATH}:/opt/pyqt:/opt/pyqt/PyQt5
 
+# Workaround for now because qt configure step cannot find fontconfig libs when adding the -fontconfig flag
 export QT_QPA_FONTDIR=/usr/share/fonts/truetype/noto
