@@ -50,6 +50,7 @@ build()
         -no-pch \
         -no-rpath \
         -eglfs \
+        -linuxfb \
         -gbm \
         -opengl es2 \
         -kms \
