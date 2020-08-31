@@ -39,7 +39,6 @@ build()
         -device-option CROSS_COMPILE="${CROSS_COMPILE}" \
         -sysroot "${SYSROOT}" \
         -extprefix "${TARGET_DIR}/qt" \
-        -release \
         -confirm-license \
         -opensource \
         -no-use-gold-linker \
@@ -49,17 +48,7 @@ build()
         -silent \
         -no-pch \
         -no-rpath \
-        -eglfs \
-        -linuxfb \
-        -gbm \
-        -opengl es2 \
-        -kms \
-        -xcb \
-        -xcb-xlib \
-        -xkbcommon \
-        -openssl \
-        -no-directfb \
-        -no-linuxfb \
+        -no-xcb \
         -nomake tests \
         -nomake tools \
         -nomake examples \
