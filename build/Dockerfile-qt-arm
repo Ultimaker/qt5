@@ -1,4 +1,4 @@
-FROM armv7hf-jessie-qemu
+FROM balenalib/armv7hf-debian:buster
 
 RUN [ "cross-build-start" ]
 
@@ -10,7 +10,7 @@ RUN apt-get update
 RUN apt-get install -y build-essential perl python git wget python3-dev curl
 
 # install libssl-dev to build ssl-enabled qt. otherwise pyqt build will fail
-RUN apt-get install -y libgl1-mesa-dev libssl-dev libfontconfig1-dev libinput-dev libasound2-dev libudev-dev
+RUN apt-get install -y libgl1-mesa-dev libssl-dev libfontconfig1-dev libinput-dev libasound2-dev libudev-dev openssh-client
 
 RUN mkdir /inst
 
@@ -22,7 +22,7 @@ RUN chmod 600 /root/.ssh/id_rsa
 RUN ssh-keyscan github.com > /root/.ssh/known_hosts
 
 # checkout git tag that matches version being built
-RUN cd /src && git clone --recursive -b MSC_imx6_simple git@github.com:Ultimaker/qt5.git qt
+RUN cd /src && git clone --recursive -b master-next_som git@github.com:Ultimaker/qt5.git qt
 
 # comment out '-no-xcb' for desktop builds
 RUN cd /src/qt && ./configure \
