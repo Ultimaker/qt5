@@ -51,6 +51,7 @@ index 00000000..46d63179
 +
 +DISTRO_OPTS += hard-float
 +
++QT_QPA_DEFAULT_PLATFORM = linuxfb
 +# Preferred eglfs backend
 +EGLFS_DEVICE_INTEGRATION = eglfs_viv
 +
