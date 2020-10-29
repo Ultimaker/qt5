@@ -90,7 +90,10 @@ build()
         -skip qtremoteobjects \
         -skip qtwebview \
         -skip qtsystems \
-        -skip qtwebview
+        -skip qtwebview \
+        -no-eglfs \
+        -debug
+
 
 # Add the following to build the examples and remove the -nomake-examples
 #        -compile-examples \

@@ -1,0 +1,26 @@
+From 454c3baa6a5e8ca1cfc9f3a329d28036e09494c6 Mon Sep 17 00:00:00 2001
+From: Robin den Hertog <r.denhertog@ultimaker.com>
+Date: Mon, 19 Oct 2020 16:22:12 +0200
+Subject: [PATCH 2/3] MISP-1132: change card from 0 to 1
+
+Signed-off-by: Robin den Hertog <r.denhertog@ultimaker.com>
+---
+ src/plugins/platforms/linuxfb/qlinuxfbdrmscreen.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/plugins/platforms/linuxfb/qlinuxfbdrmscreen.cpp b/src/plugins/platforms/linuxfb/qlinuxfbdrmscreen.cpp
+index dcc1ef2790..a87dee3003 100644
+--- a/src/plugins/platforms/linuxfb/qlinuxfbdrmscreen.cpp
++++ b/src/plugins/platforms/linuxfb/qlinuxfbdrmscreen.cpp
+@@ -119,7 +119,7 @@ private:
+ };
+ 
+ QLinuxFbDevice::QLinuxFbDevice(QKmsScreenConfig *screenConfig)
+-    : QKmsDevice(screenConfig, QStringLiteral("/dev/dri/card0"))
++    : QKmsDevice(screenConfig, QStringLiteral("/dev/dri/card1"))
+ {
+ }
+ 
+-- 
+2.17.1
+
