@@ -51,11 +51,11 @@ update_modules()
 {
     git submodule update --init --recursive --depth 1
     cd "${SRC_DIR}/qtbase"
-#    for patch in "${SRC_DIR}/patches/qtbase/"*.patch; do
-#        if git apply --check "${patch}" > /dev/null 2>&1; then
-#            git apply "${patch}"
-#        fi
-#    done
+    for patch in "${SRC_DIR}/patches/qtbase/"*.patch; do
+        if git apply --check "${patch}" > /dev/null 2>&1; then
+            git apply "${patch}"
+        fi
+    done
 }
 
 run_shellcheck()
