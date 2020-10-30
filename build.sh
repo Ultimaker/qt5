@@ -261,8 +261,8 @@ if [ "${#}" -gt 1 ]; then
 fi
 
 if [ "${#}" -eq 0 ]; then
-#    build
-#    build_pyqt
+    build
+    build_pyqt
     create_debian_package
     exit 0
 fi
