@@ -4,7 +4,7 @@
 set -eu
 
 ARCH="armhf"
-UM_ARCH="sun7i" # Empty string, or sun7i for R1, or imx6dl for R2
+UM_ARCH="imx6dl" # Empty string, or sun7i for R1, or imx6dl for R2
 
 SRC_DIR="$(pwd)"
 BUILD_DIR_TEMPLATE="_build"
@@ -82,87 +82,10 @@ build()
         -skip qtwebview \
         -skip qtsystems \
         -platform linux-g++-64 \
-        -device ultimaker-linux-sun7i \
+        -device ultimaker-linux-imx6-g++ \
         -device-option CROSS_COMPILE="${CROSS_COMPILE}" \
         -sysroot "${SYSROOT}" \
         -extprefix "${TARGET_DIR}/qt"
-
-#        -skip qtenginio \
-#        -skip qtquick1 \
-
-
-#        -platform linux-g++-64 \
-#        -device ultimaker \
-#        -device-option CROSS_COMPILE="${CROSS_COMPILE}" \
-#        -sysroot "${SYSROOT}" \
-#        -extprefix "${TARGET_DIR}/qt" \
-#        -release \
-#        -confirm-license \
-#        -opensource \
-#        -no-use-gold-linker \
-#        -accessibility \
-#        -pkg-config \
-#        -shared \
-#        -silent \
-#        -no-pch \
-#        -no-rpath \
-#        -eglfs \
-#        -linuxfb \
-#        -gbm \
-#        -opengl es2 \
-#        -kms \
-#        -xcb \
-#        -xcb-xlib \
-#        -xkbcommon \
-#        -openssl \
-#        -no-directfb \
-#        -no-linuxfb \
-#        -nomake tests \
-#        -nomake tools \
-#        -nomake examples \
-#        -no-compile-examples \
-#        -no-cups \
-#        -no-sql-db2 \
-#        -no-sql-ibase \
-#        -no-sql-mysql \
-#        -no-sql-oci \
-#        -no-sql-odbc \
-#        -no-sql-psql \
-#        -no-sql-sqlite \
-#        -no-sql-sqlite2 \
-#        -no-sql-tds \
-#        -libudev \
-#        -widgets \
-#        -skip qtconnectivity \
-#        -skip qtdoc \
-#        -skip qtlocation \
-#        -skip qtscript \
-#        -skip qtsensors \
-#        -skip qtwebchannel \
-#        -skip qtwebengine \
-#        -skip qtwebsockets \
-#        -skip qtandroidextras \
-#        -skip qtactiveqt \
-#        -skip qttools \
-#        -skip qtserialport \
-#        -skip qtwayland \
-#        -skip qtgamepad \
-#        -skip qtscxml \
-#        -skip qtcharts \
-#        -skip qtdatavis3d \
-#        -skip qtfeedback \
-#        -skip qtspeech \
-#        -skip qtnetworkauth \
-#        -skip qtpim \
-#        -skip qtpurchasing \
-#        -skip qtremoteobjects \
-#        -skip qtwebview \
-#        -skip qtsystems \
-#        -skip qtwebview
-
-# Add the following to build the examples and remove the -nomake-examples
-#        -compile-examples \
-#        -examplesdir /usr/share/examples \
 
     make "${MAKEFLAGS}"
     make "${MAKEFLAGS}" install
