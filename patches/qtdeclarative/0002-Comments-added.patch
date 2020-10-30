@@ -1,0 +1,116 @@
+From 802976f7b6311459bf41d53bb3360e2d1551360f Mon Sep 17 00:00:00 2001
+From: Joost Jager <joost.jager@gmail.com>
+Date: Tue, 20 Feb 2018 15:01:29 +0100
+Subject: [PATCH 2/3] Comments added
+
+---
+ .../software/qsgsoftwarerenderloop.cpp        | 34 +++----------------
+ .../software/qsgsoftwarerenderloop_p.h        |  3 --
+ .../qsgsoftwarethreadedrenderloop.cpp         |  4 +++
+ src/quick/scenegraph/qsgcontext.cpp           |  1 -
+ 4 files changed, 9 insertions(+), 33 deletions(-)
+
+diff --git a/src/quick/scenegraph/adaptations/software/qsgsoftwarerenderloop.cpp b/src/quick/scenegraph/adaptations/software/qsgsoftwarerenderloop.cpp
+index 3c11a4e44..ea48d5e9e 100644
+--- a/src/quick/scenegraph/adaptations/software/qsgsoftwarerenderloop.cpp
++++ b/src/quick/scenegraph/adaptations/software/qsgsoftwarerenderloop.cpp
+@@ -59,6 +59,10 @@ QSGSoftwareRenderLoop::QSGSoftwareRenderLoop()
+     sg = new QSGSoftwareContext();
+     rc = sg->createRenderContext();
+ 
++    // Create a QSGAnimationDriver. In the original Qt code, no animation driver was created for the software render loop.
++    // This caused a default timer-only based animation driver to be used. Timer based driving is almost never in sync with
++    // the actual refresh rate and this caused hickups in animations/transitions. The QSGAnimationDriver locks into the vsync
++    // if not too many frames are dropped.
+     m_anim = sg->createAnimationDriver(this);
+     connect(m_anim, &QAnimationDriver::started, this, &QSGSoftwareRenderLoop::onAnimationStarted);
+     connect(m_anim, &QAnimationDriver::stopped, this, &QSGSoftwareRenderLoop::onAnimationStopped);
+@@ -74,43 +78,15 @@ QSGSoftwareRenderLoop::~QSGSoftwareRenderLoop()
+ 
+ void QSGSoftwareRenderLoop::onAnimationStarted()
+ {
+-    // startOrStopAnimationTimer();
+-
++    // simplified handling of animation started, inspired by QSGSoftwareThreadedRenderLoop
+     for (const WindowData &w : qAsConst(m_windows))
+         w.window->requestUpdate();
+ }
+ 
+ void QSGSoftwareRenderLoop::onAnimationStopped()
+ {
+-    // startOrStopAnimationTimer();
+-}
+-
+-
+-void QSGSoftwareRenderLoop::startOrStopAnimationTimer()
+-{
+-    // int exposedWindowCount = 0;
+-    // const WindowData *exposed = nullptr;
+-
+-    // for (int i = 0; i < m_windows.size(); ++i) {
+-    //     const WindowData &w(m_windows[i]);
+-    //     if (w.window->isVisible() && w.window->isExposed()) {
+-    //         ++exposedWindowCount;
+-    //         exposed = &w;
+-    //     }
+-    // }
+-
+-    // if (animationTimer && (exposedWindowCount == 1 || !m_anim->isRunning())) {
+-    //     killTimer(animationTimer);
+-    //     animationTimer = 0;
+-    //     // If animations are running, make sure we keep on animating
+-    //     if (m_anim->isRunning())
+-    //         exposed->window->requestUpdate();
+-    // } else if (!animationTimer && exposedWindowCount != 1 && m_anim->isRunning()) {
+-    //     animationTimer = startTimer(qsgrl_animation_interval());
+-    // }
+ }
+ 
+-
+ void QSGSoftwareRenderLoop::show(QQuickWindow *window)
+ {
+     WindowData data;
+diff --git a/src/quick/scenegraph/adaptations/software/qsgsoftwarerenderloop_p.h b/src/quick/scenegraph/adaptations/software/qsgsoftwarerenderloop_p.h
+index c64b8be5c..b77cf4d7a 100644
+--- a/src/quick/scenegraph/adaptations/software/qsgsoftwarerenderloop_p.h
++++ b/src/quick/scenegraph/adaptations/software/qsgsoftwarerenderloop_p.h
+@@ -106,9 +106,6 @@ public:
+ public Q_SLOTS:
+     void onAnimationStarted();
+     void onAnimationStopped();
+-
+-private:
+-    void startOrStopAnimationTimer();
+ };
+ 
+ QT_END_NAMESPACE
+diff --git a/src/quick/scenegraph/adaptations/software/qsgsoftwarethreadedrenderloop.cpp b/src/quick/scenegraph/adaptations/software/qsgsoftwarethreadedrenderloop.cpp
+index fbad2c918..76eed6c76 100644
+--- a/src/quick/scenegraph/adaptations/software/qsgsoftwarethreadedrenderloop.cpp
++++ b/src/quick/scenegraph/adaptations/software/qsgsoftwarethreadedrenderloop.cpp
+@@ -521,6 +521,10 @@ void QSGSoftwareRenderThread::syncAndRender()
+ 
+         // Since there is no V-Sync with QBackingStore, throttle rendering the refresh
+         // rate of the current screen the window is on.
++
++        // Sleep code below commented out. Because the triple buffer driver already blocks on page swap,
++        // it is harmful to sleep again here.
++
+         //int blockTime = vsyncDelta - (int) renderThrottleTimer.elapsed();
+         //if (blockTime > 0) {
+         //    qCDebug(QSG_RASTER_LOG_RENDERLOOP, "RT - blocking for %d ms", blockTime);
+diff --git a/src/quick/scenegraph/qsgcontext.cpp b/src/quick/scenegraph/qsgcontext.cpp
+index b9ecd357b..d9ed25c09 100644
+--- a/src/quick/scenegraph/qsgcontext.cpp
++++ b/src/quick/scenegraph/qsgcontext.cpp
+@@ -129,7 +129,6 @@ public:
+     {
+         QScreen *screen = QGuiApplication::primaryScreen();
+         if (screen && !qsg_useConsistentTiming()) {
+-            // If refresh rate isn't reported properly, think about hard coding it here
+             m_vsync = 1000.0 / screen->refreshRate();
+             if (m_vsync <= 0)
+                 m_mode = TimerMode;
+-- 
+2.17.1
+
