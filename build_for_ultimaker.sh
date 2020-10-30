@@ -56,6 +56,11 @@ update_modules()
             git apply "${patch}"
         fi
     done
+    for patch in "${SRC_DIR}/patches/qtdeclerative/"*.patch; do
+        if git apply --check "${patch}" > /dev/null 2>&1; then
+            git apply "${patch}"
+        fi
+    done
 }
 
 run_shellcheck()
