@@ -1,7 +1,7 @@
 [submodule "qtbase"]
 	path = qtbase
-	url = http://code.qt.io/qt/qtbase.git
-	branch = 5.12.3
+	url = ../qtbase.git
+	branch = 5.12.3_with_um_patches
 	status = essential
 [submodule "qtsvg"]
 	depends = qtbase
@@ -13,8 +13,8 @@
 	depends = qtbase
 	recommends = qtsvg
 	path = qtdeclarative
-	url = http://code.qt.io/qt/qtdeclarative.git
-	branch = 5.12.3
+	url = ../qtdeclarative.git
+	branch = MISP-1132-potential-buster-branch-2
 	status = essential
 [submodule "qtactiveqt"]
 	depends = qtbase
