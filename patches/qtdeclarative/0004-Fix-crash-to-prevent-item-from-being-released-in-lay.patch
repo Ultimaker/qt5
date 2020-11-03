@@ -1,0 +1,33 @@
+From 5868d3afe4080bca32cd3f83987d1ce008e7675b Mon Sep 17 00:00:00 2001
+From: Elvis Lee <kwangwoong.lee@lge.com>
+Date: Fri, 28 Mar 2014 18:21:17 +0900
+Subject: [PATCH] Fix crash to prevent item from being released in layout
+
+Items which stopped transition on preparing transition eventually
+will be released in layout. So we don't need to allow releasing it.
+Otherwise crash occurs while QQuickItemViewTransitionableItem and
+QQuickTransitionManager destroy themselves on releasing the item.
+
+Task-number: QTBUG-37977
+Change-Id: I22468c06db53647d4bc284006a07140f9f914af9
+---
+ src/quick/items/qquickitemview.cpp | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/src/quick/items/qquickitemview.cpp b/src/quick/items/qquickitemview.cpp
+index 8dafc16cf..97224a1b1 100644
+--- a/src/quick/items/qquickitemview.cpp
++++ b/src/quick/items/qquickitemview.cpp
+@@ -2234,6 +2234,10 @@ bool QQuickItemViewPrivate::prepareNonVisibleItemTransition(FxViewItem *item, co
+
+ void QQuickItemViewPrivate::viewItemTransitionFinished(QQuickItemViewTransitionableItem *item)
+ {
++    /* Don't allow to release the item from releasePendingTransition in layout */
++    if (inLayout)
++        return;
++
+     for (int i=0; i<releasePendingTransition.count(); i++) {
+         if (releasePendingTransition.at(i)->transitionableItem == item) {
+             releaseItem(releasePendingTransition.takeAt(i));
+--
+2.17.1

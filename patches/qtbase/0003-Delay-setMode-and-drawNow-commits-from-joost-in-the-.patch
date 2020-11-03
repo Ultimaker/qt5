@@ -75,7 +75,7 @@ index a87dee3003..0a1fbf3b37 100644
  };
  
  QLinuxFbDevice::QLinuxFbDevice(QKmsScreenConfig *screenConfig)
-     : QKmsDevice(screenConfig, QStringLiteral("/dev/dri/card1"))
+     : QKmsDevice(screenConfig, QStringLiteral("/dev/dri/card0"))
  {
 +    m_deviceInitialized = false;
  }
