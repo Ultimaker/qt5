@@ -5,7 +5,7 @@
 # Copyright (C) 2019 Ultimaker B.V.
 #
 
-set -eu
+set -eux
 
 LOCAL_REGISTRY_IMAGE="qt5-ultimaker"
 
@@ -56,7 +56,8 @@ update_modules()
             git apply "${patch}"
         fi
     done
-    for patch in "${SRC_DIR}/patches/qtdeclerative/"*.patch; do
+    cd "${SRC_DIR}/qtdeclarative"
+    for patch in "${SRC_DIR}/patches/qtdeclarative/"*.patch; do
         if git apply --check "${patch}" > /dev/null 2>&1; then
             git apply "${patch}"
         fi
@@ -154,7 +155,7 @@ if [ "${run_linters}" = "yes" ]; then
 fi
 
 update_modules
-run_build "${@}"
-deliver_pkg
+#run_build "${@}"
+#deliver_pkg
 
 exit 0
