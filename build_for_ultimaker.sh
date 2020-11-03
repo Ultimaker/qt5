@@ -5,7 +5,7 @@
 # Copyright (C) 2019 Ultimaker B.V.
 #
 
-set -eux
+set -eu
 
 LOCAL_REGISTRY_IMAGE="qt5-ultimaker"
 
@@ -155,7 +155,7 @@ if [ "${run_linters}" = "yes" ]; then
 fi
 
 update_modules
-#run_build "${@}"
-#deliver_pkg
+run_build "${@}"
+deliver_pkg
 
 exit 0
