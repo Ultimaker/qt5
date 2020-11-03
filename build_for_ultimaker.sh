@@ -56,11 +56,13 @@ update_modules()
             git apply "${patch}"
         fi
     done
-    for patch in "${SRC_DIR}/patches/qtdeclerative/"*.patch; do
+    cd "${SRC_DIR}/qtdeclarative"
+    for patch in "${SRC_DIR}/patches/qtdeclarative/"*.patch; do
         if git apply --check "${patch}" > /dev/null 2>&1; then
             git apply "${patch}"
         fi
     done
+    cd "${SRC_DIR}"
 }
 
 run_shellcheck()
