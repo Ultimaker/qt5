@@ -49,7 +49,8 @@ run_in_docker()
 
 update_modules()
 {
-    git submodule update --init --recursive --depth 1
+    git submodule sync --recursive
+    git submodule update --init --recursive --remote --depth 1
 }
 
 run_shellcheck()
