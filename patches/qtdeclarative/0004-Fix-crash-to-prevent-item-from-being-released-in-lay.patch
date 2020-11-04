@@ -19,7 +19,7 @@ index 8dafc16cf..97224a1b1 100644
 --- a/src/quick/items/qquickitemview.cpp
 +++ b/src/quick/items/qquickitemview.cpp
 @@ -2234,6 +2234,10 @@ bool QQuickItemViewPrivate::prepareNonVisibleItemTransition(FxViewItem *item, co
-
+ 
  void QQuickItemViewPrivate::viewItemTransitionFinished(QQuickItemViewTransitionableItem *item)
  {
 +    /* Don't allow to release the item from releasePendingTransition in layout */
@@ -29,5 +29,6 @@ index 8dafc16cf..97224a1b1 100644
      for (int i=0; i<releasePendingTransition.count(); i++) {
          if (releasePendingTransition.at(i)->transitionableItem == item) {
              releaseItem(releasePendingTransition.takeAt(i));
---
+-- 
 2.17.1
+

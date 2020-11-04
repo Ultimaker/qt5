@@ -1,7 +1,7 @@
-From 6fea6b73e5ba4a6a2923551d173044af09c88e3a Mon Sep 17 00:00:00 2001
+From a717ccaeffb27d7e5949f4ab202d668ebb7e7a3c Mon Sep 17 00:00:00 2001
 From: Raymond Siudak <r.siudak@ultimaker.com>
-Date: Tue, 3 Nov 2020 15:40:16 +0100
-Subject: [PATCH] All-all-Ultimaker-specific-makespecs
+Date: Fri, 30 Oct 2020 13:10:59 +0100
+Subject: [PATCH] All all Ultimaker specific makespecs
 
 Signed-off-by: Raymond Siudak <r.siudak@ultimaker.com>
 ---
@@ -21,7 +21,7 @@ Signed-off-by: Raymond Siudak <r.siudak@ultimaker.com>
 
 diff --git a/mkspecs/devices/ultimaker-linux-imx6-eglfs-g++/qmake.conf b/mkspecs/devices/ultimaker-linux-imx6-eglfs-g++/qmake.conf
 new file mode 100644
-index 0000000000..46d631796d
+index 00000000..46d63179
 --- /dev/null
 +++ b/mkspecs/devices/ultimaker-linux-imx6-eglfs-g++/qmake.conf
 @@ -0,0 +1,39 @@
@@ -66,7 +66,7 @@ index 0000000000..46d631796d
 +load(qt_config)
 diff --git a/mkspecs/devices/ultimaker-linux-imx6-eglfs-g++/qplatformdefs.h b/mkspecs/devices/ultimaker-linux-imx6-eglfs-g++/qplatformdefs.h
 new file mode 100644
-index 0000000000..6a35ed45d5
+index 00000000..6a35ed45
 --- /dev/null
 +++ b/mkspecs/devices/ultimaker-linux-imx6-eglfs-g++/qplatformdefs.h
 @@ -0,0 +1,40 @@
@@ -112,7 +112,7 @@ index 0000000000..6a35ed45d5
 +#include "../../linux-g++/qplatformdefs.h"
 diff --git a/mkspecs/devices/ultimaker-linux-imx6-g++/qmake.conf b/mkspecs/devices/ultimaker-linux-imx6-g++/qmake.conf
 new file mode 100644
-index 0000000000..a2ea6baee4
+index 00000000..a2ea6bae
 --- /dev/null
 +++ b/mkspecs/devices/ultimaker-linux-imx6-g++/qmake.conf
 @@ -0,0 +1,50 @@
@@ -169,7 +169,7 @@ index 0000000000..a2ea6baee4
 \ No newline at end of file
 diff --git a/mkspecs/devices/ultimaker-linux-imx6-g++/qplatformdefs.h b/mkspecs/devices/ultimaker-linux-imx6-g++/qplatformdefs.h
 new file mode 100644
-index 0000000000..6a35ed45d5
+index 00000000..6a35ed45
 --- /dev/null
 +++ b/mkspecs/devices/ultimaker-linux-imx6-g++/qplatformdefs.h
 @@ -0,0 +1,40 @@
@@ -215,7 +215,7 @@ index 0000000000..6a35ed45d5
 +#include "../../linux-g++/qplatformdefs.h"
 diff --git a/mkspecs/devices/ultimaker-linux-sun7i/qmake.conf b/mkspecs/devices/ultimaker-linux-sun7i/qmake.conf
 new file mode 100644
-index 0000000000..de663f9025
+index 00000000..de663f90
 --- /dev/null
 +++ b/mkspecs/devices/ultimaker-linux-sun7i/qmake.conf
 @@ -0,0 +1,51 @@
@@ -272,7 +272,7 @@ index 0000000000..de663f9025
 +load(qt_config)
 diff --git a/mkspecs/devices/ultimaker-linux-sun7i/qplatformdefs.h b/mkspecs/devices/ultimaker-linux-sun7i/qplatformdefs.h
 new file mode 100644
-index 0000000000..ea9e3bb74b
+index 00000000..ea9e3bb7
 --- /dev/null
 +++ b/mkspecs/devices/ultimaker-linux-sun7i/qplatformdefs.h
 @@ -0,0 +1 @@
