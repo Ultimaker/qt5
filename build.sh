@@ -34,6 +34,7 @@ build()
     cd "${BUILD_DIR}"
 
     "${SRC_DIR}/configure" \
+        -ccache \
         -no-xcb \
         -confirm-license \
         -opensource \
