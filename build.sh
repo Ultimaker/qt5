@@ -34,12 +34,14 @@ build()
     cd "${BUILD_DIR}"
 
     "${SRC_DIR}/configure" \
+        -ccache \
         -platform linux-g++-64 \
         -device ultimaker-linux-imx6-g++ \
         -device-option CROSS_COMPILE="${CROSS_COMPILE}" \
         -sysroot "${SYSROOT}" \
         -extprefix "${TARGET_DIR}/qt" \
         -release \
+        -no-xcb \
         -confirm-license \
         -opensource \
         -no-use-gold-linker \

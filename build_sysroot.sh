@@ -49,6 +49,8 @@ build_sysroot()
     mount --bind "/proc" "${SYSROOT}/proc"
     mount --bind "/sys" "${SYSROOT}/sys"
 
+    mkdir -p "${SYSROOT}/ccache"
+
     cp -f "${QEMU_BINARY}" "${SYSROOT}/usr/bin"
 
     # Install the forked specially configured dependencies
