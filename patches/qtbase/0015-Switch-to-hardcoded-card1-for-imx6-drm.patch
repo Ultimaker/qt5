@@ -1,0 +1,26 @@
+From 6024ebe62432cba13ec4a0eee20887f6df40fa4a Mon Sep 17 00:00:00 2001
+From: Raymond Siudak <r.siudak@ultimaker.com>
+Date: Wed, 4 Nov 2020 08:51:33 +0100
+Subject: [PATCH] Switch to hardcoded card1 for imx6 drm
+
+Signed-off-by: Raymond Siudak <r.siudak@ultimaker.com>
+---
+ src/plugins/platforms/linuxfb/qlinuxfbdrmscreen.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/plugins/platforms/linuxfb/qlinuxfbdrmscreen.cpp b/src/plugins/platforms/linuxfb/qlinuxfbdrmscreen.cpp
+index e667c61ec1..bc8ae56d75 100644
+--- a/src/plugins/platforms/linuxfb/qlinuxfbdrmscreen.cpp
++++ b/src/plugins/platforms/linuxfb/qlinuxfbdrmscreen.cpp
+@@ -145,7 +145,7 @@ private:
+ };
+ 
+ QLinuxFbDevice::QLinuxFbDevice(QKmsScreenConfig *screenConfig)
+-    : QKmsDevice(screenConfig, QStringLiteral("/dev/dri/card0"))
++    : QKmsDevice(screenConfig, QStringLiteral("/dev/dri/card1"))
+ {
+     m_timer.start();
+ 
+-- 
+2.29.0
+
