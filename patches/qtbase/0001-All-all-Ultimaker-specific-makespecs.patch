@@ -153,7 +153,7 @@ index 00000000..a2ea6bae
 +contains(DISTRO_OPTS, deb-multi-arch): \
 +QMAKE_PKG_CONFIG = $${CROSS_COMPILE}pkg-config
 +
-+QMAKE_CFLAGS            += -marm -mthumb-interwork -mabi=aapcs-linux -mfloat-abi=hard
++QMAKE_CFLAGS            += -marm -mno-thumb-interwork -mabi=aapcs-linux -mfloat-abi=hard
 +QMAKE_CXXFLAGS          = $$QMAKE_CFLAGS
 +
 +#include(../common/linux_arm_device_post.conf)
@@ -256,7 +256,7 @@ index 00000000..de663f90
 +contains(DISTRO_OPTS, deb-multi-arch): \
 +QMAKE_PKG_CONFIG = $${CROSS_COMPILE}pkg-config
 +
-+QMAKE_CFLAGS            += -march=armv7ve -marm -mthumb-interwork -mfpu=neon-vfpv4 -mtune=cortex-a7 -mabi=aapcs-linux -mfloat-abi=hard
++QMAKE_CFLAGS            += -march=armv7ve -marm -mno-thumb-interwork -mfpu=neon-vfpv4 -mtune=cortex-a7 -mabi=aapcs-linux -mfloat-abi=hard
 +QMAKE_CXXFLAGS          = $$QMAKE_CFLAGS
 +
 +
