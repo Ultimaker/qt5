@@ -1,0 +1,524 @@
+commit e9520ec84c95e10a6826b2289e46552a2d446895
+Author: Yulong Bai <yulong.bai@qt.io>
+Date:   Tue May 21 13:48:52 2019 +0200
+
+    Fix crash caused by objects self-destructions during displacement animations
+    
+    The root cause was that the QAbstractAnimationJob::finished() might delegate its
+    destruction to change.listener->animationFinished(this), and the original author
+    was aware of that and provided a RETURN_IF_DELETE macro to return early if itself
+    got deleted. In the bug's case, change.listener->animationFinished(this)
+    dispatched to QQuickItemViewPrivate::animationFinished() which called
+    QQuickItemViewPrivate::release() and deleted the QAbstractAnimationJob object
+    itself in the end.
+    
+    However, any objects derived from QAbstractAnimationJob, or holding a pointer
+    to a QAbstractAnimationJob, may potentially fall into the code path calling
+    QAbstractAnimationJob::finished(). Any QAnimationJobChangeListener that directly
+    or indirectly deletes QAbstractAnimationJob should be very suspicious to this
+    kind of "heap-use-after-free" bug. Should ensure that the QAbstractAnimationJob
+    won't be referenced after deletion.
+    
+    In the bug's case, within the code path triggered by ListView displacement
+    animation, the other affected classes by QAbstractAnimationJob are:
+    QQuickItemViewFxItem, QQuickItemViewTransitionableItem, QQuickTransitionManager.
+    
+    To fix this, a new SelfDeletable class is factored out to simplify the self-deletion
+    test logic. Any affected classes are made to have a public member m_selfDeletable.
+    Any code paths that finally reach QAbstractAnimationJob::finished() are
+    wrapped with related util macro.
+    
+    Change-Id: Idd33fc3f2d529fd7d8bb088c329101b1e70dd6c0
+    Task-number: QTBUG-44308
+    Reviewed-by: Richard Moe Gustavsen <richard.gustavsen@qt.io>
+
+diff --git a/src/qml/animations/qabstractanimationjob.cpp b/src/qml/animations/qabstractanimationjob.cpp
+index ece2f0d692..7a784a2b35 100644
+--- a/src/qml/animations/qabstractanimationjob.cpp
++++ b/src/qml/animations/qabstractanimationjob.cpp
+@@ -263,7 +263,6 @@ QAbstractAnimationJob::QAbstractAnimationJob()
+     , m_currentLoopStartTime(0)
+     , m_nextSibling(nullptr)
+     , m_previousSibling(nullptr)
+-    , m_wasDeleted(nullptr)
+     , m_hasRegisteredTimer(false)
+     , m_isPause(false)
+     , m_isGroup(false)
+@@ -277,9 +276,6 @@ QAbstractAnimationJob::QAbstractAnimationJob()
+ 
+ QAbstractAnimationJob::~QAbstractAnimationJob()
+ {
+-    if (m_wasDeleted)
+-        *m_wasDeleted = true;
+-
+     //we can't call stop here. Otherwise we get pure virtual calls
+     if (m_state != Stopped) {
+         State oldState = m_state;
+diff --git a/src/qml/animations/qabstractanimationjob_p.h b/src/qml/animations/qabstractanimationjob_p.h
+index 0be6ca96ea..d046ce9def 100644
+--- a/src/qml/animations/qabstractanimationjob_p.h
++++ b/src/qml/animations/qabstractanimationjob_p.h
+@@ -52,6 +52,7 @@
+ //
+ 
+ #include <private/qtqmlglobal_p.h>
++#include <private/qanimationjobutil_p.h>
+ #include <QtCore/QObject>
+ #include <QtCore/private/qabstractanimation_p.h>
+ #include <vector>
+@@ -130,6 +131,7 @@ public:
+     bool isRenderThreadJob() const { return m_isRenderThreadJob; }
+     bool isRenderThreadProxy() const { return m_isRenderThreadProxy; }
+ 
++    SelfDeletable m_selfDeletable;
+ protected:
+     virtual void updateCurrentTime(int) {}
+     virtual void updateState(QAbstractAnimationJob::State newState, QAbstractAnimationJob::State oldState);
+@@ -174,7 +176,6 @@ protected:
+     QAbstractAnimationJob *m_previousSibling;
+     QQmlAnimationTimer *m_timer = nullptr;
+ 
+-    bool *m_wasDeleted;
+     bool m_hasRegisteredTimer:1;
+     bool m_isPause:1;
+     bool m_isGroup:1;
+diff --git a/src/qml/animations/qanimationjobutil_p.h b/src/qml/animations/qanimationjobutil_p.h
+index e3d6fe9178..83cf3b246f 100644
+--- a/src/qml/animations/qanimationjobutil_p.h
++++ b/src/qml/animations/qanimationjobutil_p.h
+@@ -51,20 +51,40 @@
+ // We mean it.
+ //
+ 
++#include <type_traits>
++
+ QT_REQUIRE_CONFIG(qml_animation);
+ 
+-#define RETURN_IF_DELETED(func) \
++// SelfDeletable is used for self-destruction detection along with
++// ACTION_IF_DELETED and RETURN_IF_DELETED macros. While using, the objects
++// under test should have a member m_selfDeletable of type SelfDeletable
++struct SelfDeletable {
++    ~SelfDeletable() {
++        if (m_wasDeleted)
++            *m_wasDeleted = true;
++    }
++    bool *m_wasDeleted = nullptr;
++};
++
++// \param p pointer to object under test, which should have a member m_selfDeletable of type SelfDeletable
++// \param func statements or functions that to be executed under test.
++// \param action post process if p was deleted under test.
++#define ACTION_IF_DELETED(p, func, action) \
+ { \
+-    bool *prevWasDeleted = m_wasDeleted; \
++    static_assert(std::is_same<decltype((p)->m_selfDeletable), SelfDeletable>::value, "m_selfDeletable must be SelfDeletable");\
++    bool *prevWasDeleted = (p)->m_selfDeletable.m_wasDeleted; \
+     bool wasDeleted = false; \
+-    m_wasDeleted = &wasDeleted; \
+-    func; \
++    (p)->m_selfDeletable.m_wasDeleted = &wasDeleted; \
++    {func;} \
+     if (wasDeleted) { \
+         if (prevWasDeleted) \
+             *prevWasDeleted = true; \
+-        return; \
++        {action;} \
+     } \
+-    m_wasDeleted = prevWasDeleted; \
++    (p)->m_selfDeletable.m_wasDeleted = prevWasDeleted; \
+ }
+ 
++#define RETURN_IF_DELETED(func) \
++ACTION_IF_DELETED(this, func, return)
++
+ #endif // QANIMATIONJOBUTIL_P_H
+diff --git a/src/quick/items/qquickflickable.cpp b/src/quick/items/qquickflickable.cpp
+index d6dddc3f1c..7e1f54f07e 100644
+--- a/src/quick/items/qquickflickable.cpp
++++ b/src/quick/items/qquickflickable.cpp
+@@ -206,8 +206,8 @@ public:
+             axisData->move.setValue(-flickable->contentX());
+         else
+             axisData->move.setValue(-flickable->contentY());
+-        cancel();
+         active = false;
++        cancel();
+     }
+ 
+ protected:
+diff --git a/src/quick/items/qquickitemview.cpp b/src/quick/items/qquickitemview.cpp
+index 8dafc16cf4..2e1962bc7b 100644
+--- a/src/quick/items/qquickitemview.cpp
++++ b/src/quick/items/qquickitemview.cpp
+@@ -2225,7 +2225,10 @@ bool QQuickItemViewPrivate::prepareNonVisibleItemTransition(FxViewItem *item, co
+     if (item->scheduledTransitionType() == QQuickItemViewTransitioner::MoveTransition)
+         repositionItemAt(item, item->index, 0);
+ 
+-    if (item->prepareTransition(transitioner, viewBounds)) {
++    bool success = false;
++    ACTION_IF_DELETED(item, success = item->prepareTransition(transitioner, viewBounds), return success);
++
++    if (success) {
+         item->releaseAfterTransition = true;
+         return true;
+     }
+diff --git a/src/quick/items/qquickitemviewfxitem.cpp b/src/quick/items/qquickitemviewfxitem.cpp
+index f9c65967ea..16c2182962 100644
+--- a/src/quick/items/qquickitemviewfxitem.cpp
++++ b/src/quick/items/qquickitemviewfxitem.cpp
+@@ -56,6 +56,8 @@ QQuickItemViewFxItem::QQuickItemViewFxItem(QQuickItem *item, bool ownItem, QQuic
+ QQuickItemViewFxItem::~QQuickItemViewFxItem()
+ {
+     delete transitionableItem;
++    transitionableItem = nullptr;
++
+     if (ownItem && item) {
+         trackGeometry(false);
+         item->setParentItem(0);
+diff --git a/src/quick/items/qquickitemviewfxitem_p_p.h b/src/quick/items/qquickitemviewfxitem_p_p.h
+index 48ffe248bc..d10ebb9cdf 100644
+--- a/src/quick/items/qquickitemviewfxitem_p_p.h
++++ b/src/quick/items/qquickitemviewfxitem_p_p.h
+@@ -54,6 +54,7 @@
+ #include <QtQuick/private/qtquickglobal_p.h>
+ #include <QtQuick/private/qquickitem_p.h>
+ #include <QtQuick/private/qquickitemviewtransition_p.h>
++#include <private/qanimationjobutil_p.h>
+ 
+ QT_REQUIRE_CONFIG(quick_itemview);
+ 
+@@ -94,6 +95,7 @@ public:
+ 
+     virtual bool contains(qreal x, qreal y) const = 0;
+ 
++    SelfDeletable m_selfDeletable;
+     int index = -1;
+     QPointer<QQuickItem> item;
+     bool ownItem;
+diff --git a/src/quick/items/qquickitemviewtransition.cpp b/src/quick/items/qquickitemviewtransition.cpp
+index 0fde0beb75..109851608b 100644
+--- a/src/quick/items/qquickitemviewtransition.cpp
++++ b/src/quick/items/qquickitemviewtransition.cpp
+@@ -61,7 +61,6 @@ public:
+     QPointF m_toPos;
+     QQuickItemViewTransitioner::TransitionType m_type;
+     bool m_isTarget;
+-    bool *m_wasDeleted;
+ 
+ protected:
+     void finished() override;
+@@ -73,14 +72,11 @@ QQuickItemViewTransitionJob::QQuickItemViewTransitionJob()
+     , m_item(nullptr)
+     , m_type(QQuickItemViewTransitioner::NoTransition)
+     , m_isTarget(false)
+-    , m_wasDeleted(nullptr)
+ {
+ }
+ 
+ QQuickItemViewTransitionJob::~QQuickItemViewTransitionJob()
+ {
+-    if (m_wasDeleted)
+-        *m_wasDeleted = true;
+     if (m_transitioner)
+         m_transitioner->runningJobs.remove(this);
+ }
+@@ -138,13 +134,7 @@ void QQuickItemViewTransitionJob::finished()
+     QQuickTransitionManager::finished();
+ 
+     if (m_transitioner) {
+-        bool deleted = false;
+-        m_wasDeleted = &deleted;
+-        m_transitioner->finishedTransition(this, m_item);
+-        if (deleted)
+-            return;
+-        m_wasDeleted = nullptr;
+-
++        RETURN_IF_DELETED(m_transitioner->finishedTransition(this, m_item));
+         m_transitioner = nullptr;
+     }
+ 
+@@ -482,7 +472,7 @@ bool QQuickItemViewTransitionableItem::prepareTransition(QQuickItemViewTransitio
+         // if transition type is not valid, the previous transition still has to be
+         // canceled so that the item can move immediately to the right position
+         item->setPosition(nextTransitionTo);
+-        stopTransition();
++        ACTION_IF_DELETED(this, stopTransition(), return false);
+     }
+ 
+     prepared = true;
+@@ -501,12 +491,12 @@ void QQuickItemViewTransitionableItem::startTransition(QQuickItemViewTransitione
+ 
+     if (!transition || transition->m_type != nextTransitionType || transition->m_isTarget != isTransitionTarget) {
+         if (transition)
+-            transition->cancel();
++            RETURN_IF_DELETED(transition->cancel());
+         delete transition;
+         transition = new QQuickItemViewTransitionJob;
+     }
+ 
+-    transition->startTransition(this, index, transitioner, nextTransitionType, nextTransitionTo, isTransitionTarget);
++    RETURN_IF_DELETED(transition->startTransition(this, index, transitioner, nextTransitionType, nextTransitionTo, isTransitionTarget));
+     clearCurrentScheduledTransition();
+ }
+ 
+@@ -558,7 +548,7 @@ void QQuickItemViewTransitionableItem::clearCurrentScheduledTransition()
+ void QQuickItemViewTransitionableItem::stopTransition()
+ {
+     if (transition)
+-        transition->cancel();
++        RETURN_IF_DELETED(transition->cancel());
+     clearCurrentScheduledTransition();
+     resetNextTransitionPos();
+ }
+diff --git a/src/quick/items/qquickitemviewtransition_p.h b/src/quick/items/qquickitemviewtransition_p.h
+index 29a62f7f10..0c7a9cad75 100644
+--- a/src/quick/items/qquickitemviewtransition_p.h
++++ b/src/quick/items/qquickitemviewtransition_p.h
+@@ -60,6 +60,7 @@ QT_REQUIRE_CONFIG(quick_viewtransitions);
+ #include <QtQml/qqml.h>
+ #include <private/qqmlguard_p.h>
+ #include <private/qquicktransition_p.h>
++#include <private/qanimationjobutil_p.h>
+ 
+ QT_BEGIN_NAMESPACE
+ 
+@@ -157,6 +158,7 @@ public:
+     bool prepareTransition(QQuickItemViewTransitioner *transitioner, int index, const QRectF &viewBounds);
+     void startTransition(QQuickItemViewTransitioner *transitioner, int index);
+ 
++    SelfDeletable m_selfDeletable;
+     QPointF nextTransitionTo;
+     QPointF lastMovedTo;
+     QPointF nextTransitionFrom;
+diff --git a/src/quick/util/qquicktransitionmanager.cpp b/src/quick/util/qquicktransitionmanager.cpp
+index e51de1a02a..0ee7e57997 100644
+--- a/src/quick/util/qquicktransitionmanager.cpp
++++ b/src/quick/util/qquicktransitionmanager.cpp
+@@ -47,6 +47,7 @@
+ #include <private/qqmlproperty_p.h>
+ 
+ #include <QtCore/qdebug.h>
++#include <private/qanimationjobutil_p.h>
+ 
+ QT_BEGIN_NAMESPACE
+ 
+@@ -79,6 +80,7 @@ void QQuickTransitionManager::setState(QQuickState *s)
+ QQuickTransitionManager::~QQuickTransitionManager()
+ {
+     delete d->transitionInstance;
++    d->transitionInstance = nullptr;
+     delete d; d = nullptr;
+ }
+ 
+@@ -129,7 +131,7 @@ void QQuickTransitionManager::transition(const QList<QQuickStateAction> &list,
+                                       QQuickTransition *transition,
+                                       QObject *defaultTarget)
+ {
+-    cancel();
++    RETURN_IF_DELETED(cancel());
+ 
+     // The copy below is ON PURPOSE, because firing actions might involve scripts that modify the list.
+     QQuickStateOperation::ActionList applyList = list;
+@@ -154,7 +156,6 @@ void QQuickTransitionManager::transition(const QList<QQuickStateAction> &list,
+     //
+     // This doesn't catch everything, and it might be a little fragile in
+     // some cases - but whatcha going to do?
+-
+     if (transition && !d->bindingsList.isEmpty()) {
+ 
+         // Apply all the property and binding changes
+@@ -258,7 +259,7 @@ void QQuickTransitionManager::transition(const QList<QQuickStateAction> &list,
+ void QQuickTransitionManager::cancel()
+ {
+     if (d->transitionInstance && d->transitionInstance->isRunning())
+-        d->transitionInstance->stop();
++        RETURN_IF_DELETED(d->transitionInstance->stop());
+ 
+     for (const QQuickStateAction &action : qAsConst(d->bindingsList)) {
+         if (action.toBinding && action.deletableToBinding) {
+diff --git a/src/quick/util/qquicktransitionmanager_p_p.h b/src/quick/util/qquicktransitionmanager_p_p.h
+index 89317e1e07..fc00ec8a52 100644
+--- a/src/quick/util/qquicktransitionmanager_p_p.h
++++ b/src/quick/util/qquicktransitionmanager_p_p.h
+@@ -52,6 +52,7 @@
+ //
+ 
+ #include "qquickanimation_p.h"
++#include <private/qanimationjobutil_p.h>
+ 
+ QT_BEGIN_NAMESPACE
+ 
+@@ -70,6 +71,7 @@ public:
+ 
+     void cancel();
+ 
++    SelfDeletable m_selfDeletable;
+ protected:
+     virtual void finished();
+ 
+diff --git a/tests/auto/quick/qquickanimations/data/animationJobSelfDestructionBug.qml b/tests/auto/quick/qquickanimations/data/animationJobSelfDestructionBug.qml
+new file mode 100644
+index 0000000000..259871785b
+--- /dev/null
++++ b/tests/auto/quick/qquickanimations/data/animationJobSelfDestructionBug.qml
+@@ -0,0 +1,108 @@
++/****************************************************************************
++**
++** Copyright (C) 2019 The Qt Company Ltd.
++** Contact: https://www.qt.io/licensing/
++**
++** This file is part of the QtCore module of the Qt Toolkit.
++**
++** $QT_BEGIN_LICENSE:LGPL$
++** Commercial License Usage
++** Licensees holding valid commercial Qt licenses may use this file in
++** accordance with the commercial license agreement provided with the
++** Software or, alternatively, in accordance with the terms contained in
++** a written agreement between you and The Qt Company. For licensing terms
++** and conditions see https://www.qt.io/terms-conditions. For further
++** information use the contact form at https://www.qt.io/contact-us.
++**
++** GNU Lesser General Public License Usage
++** Alternatively, this file may be used under the terms of the GNU Lesser
++** General Public License version 3 as published by the Free Software
++** Foundation and appearing in the file LICENSE.LGPL3 included in the
++** packaging of this file. Please review the following information to
++** ensure the GNU Lesser General Public License version 3 requirements
++** will be met: https://www.gnu.org/licenses/lgpl-3.0.html.
++**
++** GNU General Public License Usage
++** Alternatively, this file may be used under the terms of the GNU
++** General Public License version 2.0 or (at your option) the GNU General
++** Public license version 3 or any later version approved by the KDE Free
++** Qt Foundation. The licenses are as published by the Free Software
++** Foundation and appearing in the file LICENSE.GPL2 and LICENSE.GPL3
++** included in the packaging of this file. Please review the following
++** information to ensure the GNU General Public License requirements will
++** be met: https://www.gnu.org/licenses/gpl-2.0.html and
++** https://www.gnu.org/licenses/gpl-3.0.html.
++**
++** $QT_END_LICENSE$
++**
++****************************************************************************/
++import QtQuick 2.11
++import QtQuick.Window 2.11
++
++Window {
++    id: root
++    property alias timer : timer
++    property variant ops: [{'op': 'add', 'count': 3}, {'op': 'add', 'count': 6}, {'op': 'rem', 'count': 4}, {'op': 'rem', 'count': 1}, {'op': 'rem', 'count': 3}]
++    property int opIndex : 0
++    width: 400
++    height: 600
++
++    ListModel {
++        id: theModel
++    }
++
++    Timer {
++        id: timer
++        interval: 100
++        running: false
++        repeat: true
++        onTriggered: {
++            if (opIndex >= ops.length) {
++                timer.stop()
++                return
++            }
++            let op = ops[opIndex]
++            for (var i = 0; i < op.count; ++i) {
++                if (op.op === "add")
++                    theModel.append({"name": "opIndex " + opIndex})
++                else
++                    theModel.remove(0, 1);
++            }
++            opIndex = opIndex + 1
++        }
++    }
++
++    ListView {
++        anchors.top: parent.top
++        anchors.right: parent.right
++        height: 600
++        anchors.left: parent.horizontalCenter
++        spacing: 4
++        model: theModel
++        header: Text {
++            text: "YAnimator"
++        }
++        add: Transition {
++            NumberAnimation { property: "scale";   from: 0; to: 1; duration: 200 }
++            NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 200 }
++        }
++        displaced: Transition {
++            YAnimator { duration: 500 }
++            NumberAnimation { property: "opacity"; to: 1.0; duration: 500 }
++            NumberAnimation { property: "scale";   to: 1.0; duration: 500 }
++        }
++        remove: Transition {
++            NumberAnimation { property: "opacity"; to: 0; duration: 200 }
++            NumberAnimation { property: "scale";   to: 0; duration: 200 }
++        }
++        delegate: Rectangle {
++            width: 200
++            height: 20
++            color:"red"
++            Text {
++                anchors.centerIn: parent
++                text: name
++            }
++        }
++    }
++}
+diff --git a/tests/auto/quick/qquickanimations/qquickanimations.pro b/tests/auto/quick/qquickanimations/qquickanimations.pro
+index 8bb1f47af5..cf9c87a305 100644
+--- a/tests/auto/quick/qquickanimations/qquickanimations.pro
++++ b/tests/auto/quick/qquickanimations/qquickanimations.pro
+@@ -12,6 +12,7 @@ QT += core-private gui-private  qml-private quick-private testlib
+ DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0
+ 
+ OTHER_FILES += \
++    data/animationJobSelfDestructionBug.qml\
+     data/attached.qml \
+     data/badproperty1.qml \
+     data/badproperty2.qml \
+diff --git a/tests/auto/quick/qquickanimations/tst_qquickanimations.cpp b/tests/auto/quick/qquickanimations/tst_qquickanimations.cpp
+index 0f095774e8..1dad0c771c 100644
+--- a/tests/auto/quick/qquickanimations/tst_qquickanimations.cpp
++++ b/tests/auto/quick/qquickanimations/tst_qquickanimations.cpp
+@@ -109,6 +109,7 @@ private slots:
+     void unsetAnimatorProxyJobWindow();
+     void finished();
+     void replacingTransitions();
++    void animationJobSelfDestruction();
+ };
+ 
+ #define QTIMED_COMPARE(lhs, rhs) do { \
+@@ -1723,6 +1724,26 @@ void tst_qquickanimations::replacingTransitions()
+     QCOMPARE(model->count(), 3);
+ }
+ 
++void tst_qquickanimations::animationJobSelfDestruction()
++{
++    // Don't crash
++    QQmlEngine engine;
++    engine.clearComponentCache();
++    QQmlComponent c(&engine, testFileUrl("animationJobSelfDestructionBug.qml"));
++    QScopedPointer<QQuickWindow> win(qobject_cast<QQuickWindow*>(c.create()));
++    if (!c.errors().isEmpty())
++        qDebug() << c.errorString();
++    QVERIFY(win);
++    win->setTitle(QTest::currentTestFunction());
++    win->show();
++    QVERIFY(QTest::qWaitForWindowExposed(win.data()));
++    QQmlTimer *timer = win->property("timer").value<QQmlTimer*>();
++    QVERIFY(timer);
++    QCOMPARE(timer->isRunning(), false);
++    timer->start();
++    QTest::qWait(1000);
++}
++
+ QTEST_MAIN(tst_qquickanimations)
+ 
+ #include "tst_qquickanimations.moc"
