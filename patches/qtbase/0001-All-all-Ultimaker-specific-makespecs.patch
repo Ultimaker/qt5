@@ -52,7 +52,7 @@ index 0000000000..46d631796d
 +QMAKE_LIBS_OPENGL_ES2  += -lGLESv2 -lEGL -lGAL
 +QMAKE_LIBS_OPENVG      += -lOpenVG -lEGL -lGAL
 +
-+IMX6_CFLAGS             = -march=armv7-a -mfpu=neon -DLINUX=1 -DEGL_API_FB=1
++IMX6_CFLAGS             = -marm -mno-thumb-interwork -mabi=aapcs-linux -march=armv7-a -mfpu=neon -DLINUX=1 -DEGL_API_FB=1
 +QMAKE_CFLAGS           += $$IMX6_CFLAGS
 +QMAKE_CXXFLAGS         += $$IMX6_CFLAGS
 +
