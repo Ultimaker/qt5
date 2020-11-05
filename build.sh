@@ -36,6 +36,7 @@ build()
     "${SRC_DIR}/configure" \
         -ccache \
         -no-xcb \
+        -no-xcb-xlib \
         -confirm-license \
         -opensource \
         -no-compile-examples \
