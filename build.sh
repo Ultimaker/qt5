@@ -35,8 +35,9 @@ build()
 
     "${SRC_DIR}/configure" \
         -ccache \
+        -v \
         -platform linux-g++-64 \
-        -device ultimaker-linux-imx6-g++ \
+        -device ultimaker-linux-imx6-eglfs-g++ \
         -device-option CROSS_COMPILE="${CROSS_COMPILE}" \
         -sysroot "${SYSROOT}" \
         -extprefix "${TARGET_DIR}/qt" \
@@ -145,7 +146,7 @@ create_debian_package()
     mkdir -p "${DEBIAN_DIR}/DEBIAN"
     sed -e 's|@ARCH@|'"${ARCH}"'|g' \
         -e 's|@PACKAGE_NAME@|'"${PACKAGE_NAME}"'|g' \
-        -e 's|@RELEASE_VERSION@|'"${RELEASE_VERSION}-${UM_ARCH}"'|g' \
+        -e 's|@RELEASE_VERSION@|'"${RELEASE_VERSION}-${UM_ARCH}+cheetah-savory-quiche"'|g' \
         "${SRC_DIR}/debian/control.in" > "${DEBIAN_DIR}/DEBIAN/control"
 
     DEB_PACKAGE="${PACKAGE_NAME}_${RELEASE_VERSION}-${UM_ARCH}_${ARCH}.deb"
