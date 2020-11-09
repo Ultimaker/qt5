@@ -3,17 +3,17 @@
 
 set -eu
 
-ARCH="armhf"
-UM_ARCH="imx6dl" # Empty string, or sun7i for R1, or imx6dl for R2
+ARCH="${ARCH:-armhf}" # armhf or x86_64
+UM_ARCH="${UM_ARCH:-imx6dl}" # Empty string, or sun7i for R1, or imx6dl for R2
 
 SRC_DIR="$(pwd)"
-BUILD_DIR_TEMPLATE="_build"
-BUILD_DIR="${SRC_DIR}/${BUILD_DIR_TEMPLATE}"
+BUILD_DIR="${BUILD_DIR:-${SRC_DIR}/${BUILD_DIR_TEMPLATE}_${ARCH}}"
 
 # Debian package information
 PACKAGE_NAME="${PACKAGE_NAME:-qt-ultimaker}"
 QT_VERSION="5.12.3"
 RELEASE_VERSION="${RELEASE_VERSION:-${QT_VERSION}}"
+EXTRA_VERSION="${EXTRA_VERSION:-eglfs}"
 
 DEBIAN_DIR="${BUILD_DIR}/debian"
 TARGET_DIR="${DEBIAN_DIR}/opt"
@@ -110,6 +110,10 @@ build()
 #        -compile-examples \
 #        -examplesdir /usr/share/examples \
 
+    if [ ! -d "${TOOLS_DIR}/ccache" ]; then
+        mkdir -p "${TOOLS_DIR}/ccache"
+    fi
+
     make "${MAKEFLAGS}"
     make "${MAKEFLAGS}" install
 
@@ -146,10 +150,10 @@ create_debian_package()
     mkdir -p "${DEBIAN_DIR}/DEBIAN"
     sed -e 's|@ARCH@|'"${ARCH}"'|g' \
         -e 's|@PACKAGE_NAME@|'"${PACKAGE_NAME}"'|g' \
-        -e 's|@RELEASE_VERSION@|'"${RELEASE_VERSION}-${UM_ARCH}+cheetah-savory-quiche"'|g' \
+        -e 's|@RELEASE_VERSION@|'"${RELEASE_VERSION}-${UM_ARCH}+${EXTRA_VERSION}"'|g' \
         "${SRC_DIR}/debian/control.in" > "${DEBIAN_DIR}/DEBIAN/control"
 
-    DEB_PACKAGE="${PACKAGE_NAME}_${RELEASE_VERSION}-${UM_ARCH}_${ARCH}.deb"
+    DEB_PACKAGE="${PACKAGE_NAME}_${RELEASE_VERSION}-${UM_ARCH}_${ARCH}_${EXTRA_VERSION}.deb"
 
     # Add the QT runtime environment source script
     mkdir -p "${DEBIAN_DIR}/etc/qt5"

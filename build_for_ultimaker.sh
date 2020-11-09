@@ -9,13 +9,14 @@ set -eu
 
 LOCAL_REGISTRY_IMAGE="qt5-ultimaker"
 
-ARCH="${ARCH:-armhf}"
+ARCH="${ARCH:-armhf}" # armhf or x86_64
+UM_ARCH="${UM_ARCH:-imx6dl}" # Empty string, sun7i for R1, or imx6dl for R2, or empty
 SRC_DIR="$(pwd)"
 PREFIX="/usr"
 RELEASE_VERSION="${RELEASE_VERSION:-5.12.3}"
 DOCKER_WORK_DIR="/docker_workdir"
 BUILD_DIR_TEMPLATE="_build"
-BUILD_DIR="${BUILD_DIR_TEMPLATE}"
+BUILD_DIR="${BUILD_DIR_TEMPLATE}_${ARCH}"
 run_linters="yes"
 run_env_check="yes"
 
@@ -40,7 +41,7 @@ run_in_docker()
         -e "PREFIX=${PREFIX}" \
         -e "RELEASE_VERSION=${RELEASE_VERSION}" \
         -e "MAKEFLAGS=-j$(($(getconf _NPROCESSORS_ONLN) - 1))" \
-        -e "CCACHE_DIR=${DOCKER_WORK_DIR}/tools/sysroot/ccache" \
+        -e "CCACHE_DIR=${DOCKER_WORK_DIR}/tools/ccache" \
         -v "${SRC_DIR}:${DOCKER_WORK_DIR}" \
         -w "${DOCKER_WORK_DIR}" \
         "${LOCAL_REGISTRY_IMAGE}" \
@@ -61,7 +62,7 @@ shell_in_docker()
         -e "PREFIX=${PREFIX}" \
         -e "RELEASE_VERSION=${RELEASE_VERSION}" \
         -e "MAKEFLAGS=-j$(($(getconf _NPROCESSORS_ONLN) - 1))" \
-        -e "CCACHE_DIR=${DOCKER_WORK_DIR}/tools/sysroot/ccache" \
+        -e "CCACHE_DIR=${DOCKER_WORK_DIR}/tools/ccache" \
         -v "${SRC_DIR}:${DOCKER_WORK_DIR}" \
         -w "${DOCKER_WORK_DIR}" \
         "${LOCAL_REGISTRY_IMAGE}" \
