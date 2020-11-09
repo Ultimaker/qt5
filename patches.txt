@@ -1,0 +1,13 @@
+QTBase:
+0001-: Required mkspecs for ultimaker defined devices (R1 and R2). Patch contains compiler flags to disable thumbs-interwork instruction set, required for the R2 device.
+0009-: QTBase enables drm mode. This patch fixes, in combination with QTDeclarative patch 0009, the flickering screen issue by enabling DRM (set via an environ variable at Okuda startup). Based on the original patches from 5.9.4 created by Joost Jager for the Jessie QT Ultimaker builds, please see qtbase branch 5.9.4_ultimaker for the original changes.
+
+Only for R2, 00015-: Patch required to hardcode the card to card1. Using card0 will fail on an R2 but is the default card.
+Patch 0001-: Originally just for device mkspecs, but adjusted this patch during the development cycle, for example, "-mno-thumb-interwork" flag was added to fix the MISP bay button crash, which originally presented as a "libqjpeg.so Illegal Signal (SIGILL)" error.
+
+
+QTDeclarative:
+0003-: Patch that fixes QT bug 63779. Manifested as the left screen main buttons eventually freezing up after multiple taps. 
+0004-: Patch based on known issue: QTBUG-37977 (https://bugreports.qt.io/browse/QTBUG-37977). Patch is required to fix the screen crash issue, observed when a user interrupts a transition with another transition item. This fix mitigates the problem but does not completely fix all failure situations. Is completely fixed with qtdeclarative patch 0010 
+0009-: QTDeclarative ensures the animations arey fixed if synchronised to the screen refresh rate (fixes sticky buttons issue), in combination with QTBase patch 0009. Based on the original patches from 5.9.4 created by Joost Jager for the Jessie QT Ultimaker builds, please see qtdeclarative branch 5.9.4_ultimaker for the original changes.
+0010-: Patch required to fix screen crash/transition manager bug. Patch manually created from diff between 5.15.x and 5.12.3 (bug was fixed in 5.15.x, but no explicit bug report found).
