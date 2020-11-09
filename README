@@ -1,3 +1,9 @@
+PATCHES
+================
+The patches directory contains required patches that must be applied to qtBase and qtDeclarative submodules during a build.
+These patches are Ultimaker specific and compatible with QT 5.12.3.
+See patches.txt in this top level directory for specific details of what each patch fixes and/or it's origin.
+
 HOW TO BUILD QT5
 ================
 
