@@ -34,6 +34,7 @@ build()
     cd "${BUILD_DIR}"
 
     "${SRC_DIR}/configure" \
+        -no-glib \
         -ccache \
         -no-xcb \
         -no-xcb-xlib \
