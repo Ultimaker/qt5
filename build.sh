@@ -143,7 +143,7 @@ create_debian_package()
         -e 's|@RELEASE_VERSION@|'"${RELEASE_VERSION}-${UM_ARCH}+${EXTRA_VERSION}"'|g' \
         "${SRC_DIR}/debian/control.in" > "${DEBIAN_DIR}/DEBIAN/control"
 
-    DEB_PACKAGE="${PACKAGE_NAME}_${RELEASE_VERSION}_${ARCH}_-${UM_ARCH}_${EXTRA_VERSION}.deb"
+    DEB_PACKAGE="${PACKAGE_NAME}_${RELEASE_VERSION}_${ARCH}-${UM_ARCH}_${EXTRA_VERSION}.deb"
 
     # Add the QT runtime environment source script
     mkdir -p "${DEBIAN_DIR}/etc/qt5"

@@ -5,3 +5,4 @@ Makefile
 tools/sysroot
 _build*
 .idea
+tools/ccache
