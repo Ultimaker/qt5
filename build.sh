@@ -7,7 +7,7 @@ ARCH="${ARCH:-armhf}" # armhf or x86_64
 UM_ARCH="${UM_ARCH:-imx6dl}" # Empty string, or sun7i for R1, or imx6dl for R2
 
 SRC_DIR="$(pwd)"
-BUILD_DIR="${BUILD_DIR:-${SRC_DIR}/${BUILD_DIR_TEMPLATE}_${ARCH}}"
+BUILD_DIR="${BUILD_DIR:-${SRC_DIR}/${BUILD_DIR_TEMPLATE}_${ARCH}_${UM_ARCH}}"
 
 # Debian package information
 PACKAGE_NAME="${PACKAGE_NAME:-qt-ultimaker}"
@@ -43,30 +43,21 @@ build()
         -extprefix "${TARGET_DIR}/qt" \
         -release \
         -no-xcb \
+        -no-xcb-xlib \
         -confirm-license \
         -opensource \
-        -no-use-gold-linker \
-        -accessibility \
         -pkg-config \
-        -shared \
-        -silent \
-        -no-pch \
-        -no-rpath \
         -eglfs \
         -linuxfb \
         -gbm \
         -opengl es2 \
         -kms \
-        -xcb \
-        -xcb-xlib \
         -xkbcommon \
         -openssl \
         -no-directfb \
-        -no-linuxfb \
         -nomake tests \
         -nomake tools \
         -nomake examples \
-        -no-compile-examples \
         -no-cups \
         -no-sql-db2 \
         -no-sql-ibase \
@@ -77,8 +68,6 @@ build()
         -no-sql-sqlite \
         -no-sql-sqlite2 \
         -no-sql-tds \
-        -libudev \
-        -widgets \
         -skip qtconnectivity \
         -skip qtdoc \
         -skip qtlocation \
@@ -104,7 +93,8 @@ build()
         -skip qtremoteobjects \
         -skip qtwebview \
         -skip qtsystems \
-        -skip qtwebview
+        -skip qtwebview \
+        -skip qt3d
 
 # Add the following to build the examples and remove the -nomake-examples
 #        -compile-examples \
@@ -153,7 +143,7 @@ create_debian_package()
         -e 's|@RELEASE_VERSION@|'"${RELEASE_VERSION}-${UM_ARCH}+${EXTRA_VERSION}"'|g' \
         "${SRC_DIR}/debian/control.in" > "${DEBIAN_DIR}/DEBIAN/control"
 
-    DEB_PACKAGE="${PACKAGE_NAME}_${RELEASE_VERSION}-${UM_ARCH}_${ARCH}_${EXTRA_VERSION}.deb"
+    DEB_PACKAGE="${PACKAGE_NAME}_${RELEASE_VERSION}_${ARCH}_-${UM_ARCH}_${EXTRA_VERSION}.deb"
 
     # Add the QT runtime environment source script
     mkdir -p "${DEBIAN_DIR}/etc/qt5"

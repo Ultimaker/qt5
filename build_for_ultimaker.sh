@@ -16,7 +16,7 @@ PREFIX="/usr"
 RELEASE_VERSION="${RELEASE_VERSION:-5.12.3}"
 DOCKER_WORK_DIR="/docker_workdir"
 BUILD_DIR_TEMPLATE="_build"
-BUILD_DIR="${BUILD_DIR_TEMPLATE}_${ARCH}"
+BUILD_DIR="${BUILD_DIR_TEMPLATE}_${ARCH}_${UM_ARCH}"
 run_linters="yes"
 run_env_check="yes"
 
