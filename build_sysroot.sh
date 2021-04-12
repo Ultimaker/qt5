@@ -11,9 +11,9 @@ TOOLCHAIN_FILE="${TOOLS_DIR}/arm-cross-compile.toolchain"
 # Location of the sysroot, which is used during cross compiling
 SYSROOT="${TOOLS_DIR}/sysroot"
 
-TARGET_ARCH="arm"
+# TARGET_ARCH="aarch64"
 # We use the 'type -P' command instead of 'which' since the first one is built-in, faster and has better defined exit values.
-QEMU_BINARY="$(type -P qemu-${TARGET_ARCH}-static)"
+# QEMU_BINARY="$(type -P qemu-${TARGET_ARCH}-static)"
 
 
 build_sysroot()
@@ -45,22 +45,22 @@ build_sysroot()
     done
     cd "${SRC_DIR}"
 
-    mount --bind "/dev" "${SYSROOT}/dev"
-    mount --bind "/proc" "${SYSROOT}/proc"
-    mount --bind "/sys" "${SYSROOT}/sys"
-
-    cp -f "${QEMU_BINARY}" "${SYSROOT}/usr/bin"
-
-    # Install the forked specially configured dependencies
-    # TODO: These should also come from cloudsmith and have a correct version number
-    cp "${TOOLS_DIR}/"*".deb" "${SYSROOT}"
-
-    chroot "${SYSROOT}" /usr/bin/dpkg -i /libdrm-ultimaker_2.4.102-imx6dl_armhf.deb
-    chroot "${SYSROOT}" /usr/bin/dpkg -i /mesa-ultimaker_19.0.1-imx6dl_armhf.deb
-
-    umount -lR "${SYSROOT}/dev"
-    umount -lR "${SYSROOT}/proc"
-    umount -lR "${SYSROOT}/sys"
+#     mount --bind "/dev" "${SYSROOT}/dev"
+#     mount --bind "/proc" "${SYSROOT}/proc"
+#     mount --bind "/sys" "${SYSROOT}/sys"
+# 
+#     cp -f "${QEMU_BINARY}" "${SYSROOT}/usr/bin"
+# 
+#     # Install the forked specially configured dependencies
+#     # TODO: These should also come from cloudsmith and have a correct version number
+#     cp "${TOOLS_DIR}/"*".deb" "${SYSROOT}"
+# 
+#     chroot "${SYSROOT}" /usr/bin/dpkg -i /libdrm-ultimaker_2.4.102-imx6dl_armhf.deb
+#     chroot "${SYSROOT}" /usr/bin/dpkg -i /mesa-ultimaker_19.0.1-imx6dl_armhf.deb
+# 
+#     umount -lR "${SYSROOT}/dev"
+#     umount -lR "${SYSROOT}/proc"
+#     umount -lR "${SYSROOT}/sys"
 
     echo "Finished building sysroot in: ${SYSROOT}"
     echo "You can now use cmake -DCMAKE_TOOLCHAIN_FILE=${TOOLCHAIN_FILE} to build software"

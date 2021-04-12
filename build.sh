@@ -13,11 +13,11 @@ BUILD_DIR="${BUILD_DIR:-${SRC_DIR}/${BUILD_DIR_TEMPLATE}_${ARCH}_${UM_ARCH}}"
 PACKAGE_NAME="${PACKAGE_NAME:-qt-ultimaker}"
 QT_VERSION="5.12.3"
 RELEASE_VERSION="${RELEASE_VERSION:-${QT_VERSION}}"
-EXTRA_VERSION="${EXTRA_VERSION:-eglfs}"
+EXTRA_VERSION="${EXTRA_VERSION:-imx8m}"
 
 DEBIAN_DIR="${BUILD_DIR}/debian"
 TARGET_DIR="${DEBIAN_DIR}/opt"
-CROSS_COMPILE="arm-linux-gnueabihf-"
+CROSS_COMPILE="aarch64-linux-gnu-"
 
 TOOLS_DIR="${SRC_DIR}/tools"
 SYSROOT="${TOOLS_DIR}/sysroot"
@@ -32,12 +32,14 @@ build()
     fi
 
     cd "${BUILD_DIR}"
-
+#         -eglfs \
+#         -device ultimaker-linux-imx6-eglfs-g++ \
+#         -opengl es2 \
     "${SRC_DIR}/configure" \
         -ccache \
         -v \
         -platform linux-g++-64 \
-        -device ultimaker-linux-imx6-eglfs-g++ \
+        -device ultimaker-linux-imx8-g++ \
         -device-option CROSS_COMPILE="${CROSS_COMPILE}" \
         -sysroot "${SYSROOT}" \
         -extprefix "${TARGET_DIR}/qt" \
@@ -47,10 +49,8 @@ build()
         -confirm-license \
         -opensource \
         -pkg-config \
-        -eglfs \
         -linuxfb \
         -gbm \
-        -opengl es2 \
         -kms \
         -xkbcommon \
         -openssl \
