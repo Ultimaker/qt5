@@ -56,7 +56,7 @@ build_sysroot()
     cp "${TOOLS_DIR}/"*".deb" "${SYSROOT}"
 
     chroot "${SYSROOT}" /usr/bin/dpkg -i /libdrm_999.999.999-imx8m_arm64.deb
-#     chroot "${SYSROOT}" /usr/bin/dpkg -i /mesa-ultimaker_19.0.1-imx6dl_armhf.deb
+    chroot "${SYSROOT}" /usr/bin/dpkg -i /mesa-ultimaker_19.0.1-imx8m_arm64.deb
 
     umount -lR "${SYSROOT}/dev"
     umount -lR "${SYSROOT}/proc"

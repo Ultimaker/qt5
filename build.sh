@@ -3,8 +3,8 @@
 
 set -eu
 
-ARCH="${ARCH:-armhf}" # armhf or x86_64
-UM_ARCH="${UM_ARCH:-imx6dl}" # Empty string, or sun7i for R1, or imx6dl for R2
+ARCH="${ARCH:-arm64}" # armhf or x86_64 or amr64
+UM_ARCH="${UM_ARCH:-imx8m}" # Empty string, or sun7i for R1, or imx6dl for R2, or imx8m for colorado
 
 SRC_DIR="$(pwd)"
 BUILD_DIR="${BUILD_DIR:-${SRC_DIR}/${BUILD_DIR_TEMPLATE}_${ARCH}_${UM_ARCH}}"
@@ -13,7 +13,7 @@ BUILD_DIR="${BUILD_DIR:-${SRC_DIR}/${BUILD_DIR_TEMPLATE}_${ARCH}_${UM_ARCH}}"
 PACKAGE_NAME="${PACKAGE_NAME:-qt-ultimaker}"
 QT_VERSION="5.12.3"
 RELEASE_VERSION="${RELEASE_VERSION:-${QT_VERSION}}"
-EXTRA_VERSION="${EXTRA_VERSION:-imx8m}"
+EXTRA_VERSION="${EXTRA_VERSION:-eglfs}"
 
 DEBIAN_DIR="${BUILD_DIR}/debian"
 TARGET_DIR="${DEBIAN_DIR}/opt"
@@ -35,11 +35,13 @@ build()
 #         -eglfs \
 #         -device ultimaker-linux-imx6-eglfs-g++ \
 #         -opengl es2 \
+#         -gbm \
+#         -kms \
     "${SRC_DIR}/configure" \
         -ccache \
         -v \
         -platform linux-g++-64 \
-        -device ultimaker-linux-imx8-g++ \
+        -device ultimaker-linux-imx8m-eglfs-g++ \
         -device-option CROSS_COMPILE="${CROSS_COMPILE}" \
         -sysroot "${SYSROOT}" \
         -extprefix "${TARGET_DIR}/qt" \
@@ -50,10 +52,11 @@ build()
         -opensource \
         -pkg-config \
         -linuxfb \
-        -gbm \
-        -kms \
+        -eglfs \
+        -opengl es2 \
         -xkbcommon \
         -openssl \
+        -gbm \
         -no-directfb \
         -nomake tests \
         -nomake tools \
