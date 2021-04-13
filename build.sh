@@ -23,7 +23,7 @@ TOOLS_DIR="${SRC_DIR}/tools"
 SYSROOT="${TOOLS_DIR}/sysroot"
 MAKEFLAGS=-j$(($(getconf _NPROCESSORS_ONLN) - 1))
 
-export PKG_CONFIG_PATH=${SYSROOT}/usr/lib/pkgconfig:${SYSROOT}/usr/lib/arm-linux-gnueabihf/pkgconfig:${SYSROOT}/usr/share/pkgconfig
+export PKG_CONFIG_PATH=${SYSROOT}/usr/lib/pkgconfig:${SYSROOT}/usr/lib/arm-linux-gnueabihf/pkgconfig:${SYSROOT}/usr/share/pkgconfig:${SYSROOT}/usr/local/lib/pkgconfig
 
 build()
 {
@@ -32,11 +32,6 @@ build()
     fi
 
     cd "${BUILD_DIR}"
-#         -eglfs \
-#         -device ultimaker-linux-imx6-eglfs-g++ \
-#         -opengl es2 \
-#         -gbm \
-#         -kms \
     "${SRC_DIR}/configure" \
         -ccache \
         -v \
@@ -57,6 +52,7 @@ build()
         -xkbcommon \
         -openssl \
         -gbm \
+        -kms \
         -no-directfb \
         -nomake tests \
         -nomake tools \
