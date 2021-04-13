@@ -9,8 +9,8 @@ set -eu
 
 LOCAL_REGISTRY_IMAGE="qt5-ultimaker"
 
-ARCH="${ARCH:-armhf}" # armhf or x86_64
-UM_ARCH="${UM_ARCH:-imx6dl}" # Empty string, sun7i for R1, or imx6dl for R2, or empty
+ARCH="${ARCH:-arm64}" # armhf or x86_64, or arm64
+UM_ARCH="${UM_ARCH:-imx8m}" # Empty string, sun7i for R1, or imx6dl for R2, or imx8m for colorado
 SRC_DIR="$(pwd)"
 PREFIX="/usr"
 RELEASE_VERSION="${RELEASE_VERSION:-5.12.3}"
