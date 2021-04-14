@@ -57,9 +57,6 @@ build_sysroot()
     # TODO: These should also come from cloudsmith and have a correct version number
     cp "${TOOLS_DIR}/"*".deb" "${SYSROOT}"
 
-#    chroot "${SYSROOT}" /usr/bin/dpkg -i /libdrm-ultimaker_2.4.102-imx6dl_armhf.deb
-#    chroot "${SYSROOT}" /usr/bin/dpkg -i /mesa-ultimaker_19.0.1-imx6dl_armhf.deb
-
     umount -lR "${SYSROOT}/dev"
     umount -lR "${SYSROOT}/proc"
     umount -lR "${SYSROOT}/sys"
