@@ -105,3 +105,25 @@ thread apply all bt
 This will show the backtrace for all threads associated with the okuda process and is useful debugging information. Save the output on screen to a text file.
 
 To continue the process, type 'c' and hit enter. To detach gdb from the okuda process, type 'quit' and type 'y'
+
+
+LibDRM and Mesa support packages - HOW TO BUILD qt-ultimaker with these
+================
+This section contains what small code change is required to build with ultimaker specific libDRM and Mesa packages.
+If you do not understand why you would want to build with these packages, then this section is not for you.
+Edit the build_sysroot.sh file in your branch to include the two chroot lines in the location seen below:
+```
+    cp "${TOOLS_DIR}/"*".deb" "${SYSROOT}"
+
+    chroot "${SYSROOT}" /usr/bin/dpkg -i /libdrm-ultimaker_2.4.102-imx6dl_armhf.deb
+    chroot "${SYSROOT}" /usr/bin/dpkg -i /mesa-ultimaker_19.0.1-imx6dl_armhf.deb
+
+    umount -lR "${SYSROOT}/dev"
+    umount -lR "${SYSROOT}/proc"
+    umount -lR "${SYSROOT}/sys"
+```
+Then build sysroot and the package:
+```
+sudo ./build_sysroot.sh
+sudo ./build_for_ultimaker.sh
+```
