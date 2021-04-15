@@ -1,10 +1,10 @@
 {
-    "device": "/dev/dri/card1",
+    "device": "/dev/dri/card0",
     "hwcursor": false,
     "pbuffers": true,
     "outputs": [
         {
-        "name": "HDMI1", "format": "xrgb8888", "primary": true
+        "name": "LVDS1", "format": "xrgb8888", "primary": true
         }
     ]
 }

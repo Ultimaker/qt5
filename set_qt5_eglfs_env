@@ -31,4 +31,4 @@ export PYTHONPATH=${PYTHONPATH}:/opt/pyqt:/opt/pyqt/PyQt5
 # Workaround for now because qt configure step cannot find fontconfig libs when adding the -fontconfig flag
 export QT_QPA_FONTDIR=/usr/share/fonts/truetype/noto
 
-/usr/bin/python3 /usr/share/okuda/okuda_app.py --platform eglfs
+/usr/bin/python3 /usr/share/okuda/okuda_app.py --platform linuxfb
