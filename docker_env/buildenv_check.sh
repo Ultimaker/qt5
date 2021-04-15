@@ -38,6 +38,9 @@ check_compiler()
         if [ "$(command -v arm-linux-gnueabihf-gcc)" != "" ]; then
             CROSS_COMPILE="arm-linux-gnueabihf-"
         fi
+        if [ "$(command -v aarch64-linux-gnu-gcc)" != "" ]; then
+            CROSS_COMPILE="aarch64-linux-gnu-"
+        fi
         if [ "${CROSS_COMPILE}" = "" ]; then
             echo "No suiteable cross-compiler found."
             echo "One can be set explicitly via the environment variable CROSS_COMPILE='arm-linux-gnueabihf-' for example."

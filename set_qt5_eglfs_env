@@ -16,6 +16,7 @@ export QT_QPA_EGLFS_DEBUG=1
 # Other debug environment settings
 export LIBGL_DEBUG=1
 #export WAYLAND_DEBUG=1
+export QSG_INFO=1
 
 # Set the kernel mode setting (KMS) file, this file links the eglfs backend to a display
 export QT_QPA_EGLFS_KMS_CONFIG=/etc/qt5/qt_eglfs_kms_cfg.json
@@ -29,3 +30,5 @@ export PYTHONPATH=${PYTHONPATH}:/opt/pyqt:/opt/pyqt/PyQt5
 
 # Workaround for now because qt configure step cannot find fontconfig libs when adding the -fontconfig flag
 export QT_QPA_FONTDIR=/usr/share/fonts/truetype/noto
+
+/usr/bin/python3 /usr/share/okuda/okuda_app.py --platform linuxfb

@@ -3,5 +3,6 @@ Makefile
 .qmake.super
 *.pro.user*
 tools/sysroot
-_build
+_build*
 .idea
+tools/ccache

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Abort on errors, as well as unset variables. Makes the script less error prone.
-set -eu
+set -eux
 
 # Find the location of this script, as some required things are stored next to it.
 SRC_DIR="$(pwd)"
@@ -11,7 +11,7 @@ TOOLCHAIN_FILE="${TOOLS_DIR}/arm-cross-compile.toolchain"
 # Location of the sysroot, which is used during cross compiling
 SYSROOT="${TOOLS_DIR}/sysroot"
 
-TARGET_ARCH="arm"
+TARGET_ARCH="aarch64"
 # We use the 'type -P' command instead of 'which' since the first one is built-in, faster and has better defined exit values.
 QEMU_BINARY="$(type -P qemu-${TARGET_ARCH}-static)"
 
@@ -55,8 +55,8 @@ build_sysroot()
     # TODO: These should also come from cloudsmith and have a correct version number
     cp "${TOOLS_DIR}/"*".deb" "${SYSROOT}"
 
-    chroot "${SYSROOT}" /usr/bin/dpkg -i /libdrm-ultimaker_2.4.102-imx6dl_armhf.deb
-    chroot "${SYSROOT}" /usr/bin/dpkg -i /mesa-ultimaker_19.0.1-imx6dl_armhf.deb
+    chroot "${SYSROOT}" /usr/bin/dpkg -i /libdrm-ultimaker_2.4.102-imx8m_arm64.deb
+    chroot "${SYSROOT}" /usr/bin/dpkg -i /mesa-ultimaker_19.0.1-imx8m_arm64.deb
 
     umount -lR "${SYSROOT}/dev"
     umount -lR "${SYSROOT}/proc"
