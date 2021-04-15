@@ -34,25 +34,17 @@ build()
     cd "${BUILD_DIR}"
 
     "${SRC_DIR}/configure" \
-        -platform linux-g++-64 \
-        -device ultimaker-linux-imx6-g++ \
-        -device-option CROSS_COMPILE="${CROSS_COMPILE}" \
-        -sysroot "${SYSROOT}" \
-        -extprefix "${TARGET_DIR}/qt" \
+        -no-glib \
+        -ccache \
+        -no-xcb \
+        -no-xcb-xlib \
         -confirm-license \
         -opensource \
+        -no-compile-examples \
         -no-use-gold-linker \
-        -accessibility \
-        -pkg-config \
-        -shared \
-        -silent \
-        -no-pch \
-        -no-rpath \
-        -no-xcb \
+        -nomake examples \
         -nomake tests \
         -nomake tools \
-        -nomake examples \
-        -no-compile-examples \
         -no-cups \
         -no-sql-db2 \
         -no-sql-ibase \
@@ -63,8 +55,6 @@ build()
         -no-sql-sqlite \
         -no-sql-sqlite2 \
         -no-sql-tds \
-        -libudev \
-        -widgets \
         -skip qtconnectivity \
         -skip qtdoc \
         -skip qtlocation \
@@ -76,6 +66,8 @@ build()
         -skip qtandroidextras \
         -skip qtactiveqt \
         -skip qttools \
+        -skip qt3d \
+        -skip qtcanvas3d \
         -skip qtserialport \
         -skip qtwayland \
         -skip qtgamepad \
@@ -87,14 +79,16 @@ build()
         -skip qtnetworkauth \
         -skip qtpim \
         -skip qtpurchasing \
+        -skip qtqa \
+        -skip qtquickcontrols \
         -skip qtremoteobjects \
         -skip qtwebview \
         -skip qtsystems \
-        -skip qtwebview
-
-# Add the following to build the examples and remove the -nomake-examples
-#        -compile-examples \
-#        -examplesdir /usr/share/examples \
+        -platform linux-g++-64 \
+        -device ultimaker-linux-imx6-g++ \
+        -device-option CROSS_COMPILE="${CROSS_COMPILE}" \
+        -sysroot "${SYSROOT}" \
+        -extprefix "${TARGET_DIR}/qt"
 
     make "${MAKEFLAGS}"
     make "${MAKEFLAGS}" install
