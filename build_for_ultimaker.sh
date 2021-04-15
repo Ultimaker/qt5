@@ -16,7 +16,6 @@ RELEASE_VERSION="${RELEASE_VERSION:-5.12.3}"
 DOCKER_WORK_DIR="/docker_workdir"
 BUILD_DIR_TEMPLATE="_build"
 BUILD_DIR="${BUILD_DIR_TEMPLATE}"
-
 run_linters="yes"
 run_env_check="yes"
 
@@ -41,10 +40,32 @@ run_in_docker()
         -e "PREFIX=${PREFIX}" \
         -e "RELEASE_VERSION=${RELEASE_VERSION}" \
         -e "MAKEFLAGS=-j$(($(getconf _NPROCESSORS_ONLN) - 1))" \
+        -e "CCACHE_DIR=${DOCKER_WORK_DIR}/tools/sysroot/ccache" \
         -v "${SRC_DIR}:${DOCKER_WORK_DIR}" \
         -w "${DOCKER_WORK_DIR}" \
         "${LOCAL_REGISTRY_IMAGE}" \
         "${@}"
+}
+
+shell_in_docker()
+{
+    docker run \
+        --privileged \
+        --cap-add=ALL \
+        --security-opt seccomp:unconfined \
+        --rm \
+        -it \
+        -u "$(id -u)" \
+        -e "BUILD_DIR=${DOCKER_WORK_DIR}/${BUILD_DIR}" \
+        -e "ARCH=${ARCH}" \
+        -e "PREFIX=${PREFIX}" \
+        -e "RELEASE_VERSION=${RELEASE_VERSION}" \
+        -e "MAKEFLAGS=-j$(($(getconf _NPROCESSORS_ONLN) - 1))" \
+        -e "CCACHE_DIR=${DOCKER_WORK_DIR}/tools/sysroot/ccache" \
+        -v "${SRC_DIR}:${DOCKER_WORK_DIR}" \
+        -w "${DOCKER_WORK_DIR}" \
+        "${LOCAL_REGISTRY_IMAGE}" \
+        "/bin/bash"
 }
 
 update_modules()
@@ -56,6 +77,13 @@ update_modules()
             git apply "${patch}"
         fi
     done
+    cd "${SRC_DIR}/qtdeclarative"
+    for patch in "${SRC_DIR}/patches/qtdeclarative/"*.patch; do
+        if git apply --check "${patch}" > /dev/null 2>&1; then
+            git apply "${patch}"
+        fi
+    done
+    cd "${SRC_DIR}"
 }
 
 run_shellcheck()
@@ -105,7 +133,7 @@ usage()
     echo "Run './build.sh -h' for more information."
 }
 
-while getopts ":cClh" options; do
+while getopts ":cCslh" options; do
     case "${options}" in
     c)
         run_build "${@}"
@@ -113,6 +141,10 @@ while getopts ":cClh" options; do
         ;;
     C)
         run_env_check="no"
+        ;;
+    s)
+        shell_in_docker
+        exit 0
         ;;
     h)
         usage

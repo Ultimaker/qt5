@@ -1,0 +1,144 @@
+From dcff8f6faf56ab1c6c1b34e8a1301674292fd15d Mon Sep 17 00:00:00 2001
+From: Raymond Siudak <r.siudak@ultimaker.com>
+Date: Wed, 4 Nov 2020 03:38:16 +0100
+Subject: [PATCH] Add Joost qtdeclarative patches squashed
+
+Signed-off-by: Raymond Siudak <r.siudak@ultimaker.com>
+---
+ .../software/qsgsoftwarerenderloop.cpp        | 34 +++++++++++++++++++
+ .../software/qsgsoftwarerenderloop_p.h        | 10 +++++-
+ .../qsgsoftwarethreadedrenderloop.cpp         | 14 +++++---
+ 3 files changed, 52 insertions(+), 6 deletions(-)
+
+diff --git a/src/quick/scenegraph/adaptations/software/qsgsoftwarerenderloop.cpp b/src/quick/scenegraph/adaptations/software/qsgsoftwarerenderloop.cpp
+index f5a41410e..ea48d5e9e 100644
+--- a/src/quick/scenegraph/adaptations/software/qsgsoftwarerenderloop.cpp
++++ b/src/quick/scenegraph/adaptations/software/qsgsoftwarerenderloop.cpp
+@@ -58,6 +58,15 @@ QSGSoftwareRenderLoop::QSGSoftwareRenderLoop()
+ {
+     sg = new QSGSoftwareContext();
+     rc = sg->createRenderContext();
++
++    // Create a QSGAnimationDriver. In the original Qt code, no animation driver was created for the software render loop.
++    // This caused a default timer-only based animation driver to be used. Timer based driving is almost never in sync with
++    // the actual refresh rate and this caused hickups in animations/transitions. The QSGAnimationDriver locks into the vsync
++    // if not too many frames are dropped.
++    m_anim = sg->createAnimationDriver(this);
++    connect(m_anim, &QAnimationDriver::started, this, &QSGSoftwareRenderLoop::onAnimationStarted);
++    connect(m_anim, &QAnimationDriver::stopped, this, &QSGSoftwareRenderLoop::onAnimationStopped);
++    m_anim->install();
+ }
+ 
+ QSGSoftwareRenderLoop::~QSGSoftwareRenderLoop()
+@@ -66,11 +75,24 @@ QSGSoftwareRenderLoop::~QSGSoftwareRenderLoop()
+     delete sg;
+ }
+ 
++
++void QSGSoftwareRenderLoop::onAnimationStarted()
++{
++    // simplified handling of animation started, inspired by QSGSoftwareThreadedRenderLoop
++    for (const WindowData &w : qAsConst(m_windows))
++        w.window->requestUpdate();
++}
++
++void QSGSoftwareRenderLoop::onAnimationStopped()
++{
++}
++
+ void QSGSoftwareRenderLoop::show(QQuickWindow *window)
+ {
+     WindowData data;
+     data.updatePending = false;
+     data.grabOnly = false;
++    data.window = window;
+     m_windows[window] = data;
+ 
+     if (m_backingStores[window] == nullptr) {
+@@ -203,6 +225,12 @@ void QSGSoftwareRenderLoop::renderWindow(QQuickWindow *window, bool isNewExpose)
+         lastFrameTime = QTime::currentTime();
+     }
+ 
++    if (m_anim->isRunning()) {
++        m_anim->advance();
++        window->requestUpdate();
++    }
++        
++    
+     // Might have been set during syncSceneGraph()
+     if (data.updatePending)
+         maybeUpdate(window);
+@@ -271,6 +299,12 @@ void QSGSoftwareRenderLoop::handleUpdateRequest(QQuickWindow *window)
+     renderWindow(window);
+ }
+ 
++QAnimationDriver *QSGSoftwareRenderLoop::animationDriver() const
++{
++    return m_anim;
++}
++
++
+ QT_END_NAMESPACE
+ 
+ #include "moc_qsgsoftwarerenderloop_p.cpp"
+diff --git a/src/quick/scenegraph/adaptations/software/qsgsoftwarerenderloop_p.h b/src/quick/scenegraph/adaptations/software/qsgsoftwarerenderloop_p.h
+index c724d1829..b77cf4d7a 100644
+--- a/src/quick/scenegraph/adaptations/software/qsgsoftwarerenderloop_p.h
++++ b/src/quick/scenegraph/adaptations/software/qsgsoftwarerenderloop_p.h
+@@ -81,12 +81,13 @@ public:
+ 
+     QSurface::SurfaceType windowSurfaceType() const override;
+ 
+-    QAnimationDriver *animationDriver() const override { return 0; }
++    QAnimationDriver *animationDriver() const override;
+ 
+     QSGContext *sceneGraphContext() const override;
+     QSGRenderContext *createRenderContext(QSGContext *) const override { return rc; }
+ 
+     struct WindowData {
++        QQuickWindow *window;
+         bool updatePending : 1;
+         bool grabOnly : 1;
+     };
+@@ -98,6 +99,13 @@ public:
+     QSGRenderContext *rc;
+ 
+     QImage grabContent;
++
++    QAnimationDriver *m_anim;
++
++
++public Q_SLOTS:
++    void onAnimationStarted();
++    void onAnimationStopped();
+ };
+ 
+ QT_END_NAMESPACE
+diff --git a/src/quick/scenegraph/adaptations/software/qsgsoftwarethreadedrenderloop.cpp b/src/quick/scenegraph/adaptations/software/qsgsoftwarethreadedrenderloop.cpp
+index f8973af2f..087f16162 100644
+--- a/src/quick/scenegraph/adaptations/software/qsgsoftwarethreadedrenderloop.cpp
++++ b/src/quick/scenegraph/adaptations/software/qsgsoftwarethreadedrenderloop.cpp
+@@ -521,11 +521,15 @@ void QSGSoftwareRenderThread::syncAndRender()
+ 
+         // Since there is no V-Sync with QBackingStore, throttle rendering the refresh
+         // rate of the current screen the window is on.
+-        int blockTime = vsyncDelta - (int) renderThrottleTimer.elapsed();
+-        if (blockTime > 0) {
+-            qCDebug(QSG_RASTER_LOG_RENDERLOOP, "RT - blocking for %d ms", blockTime);
+-            msleep(blockTime);
+-        }
++
++        // Sleep code below commented out. Because the triple buffer driver already blocks on page swap,
++        // it is harmful to sleep again here.
++
++        // int blockTime = vsyncDelta - (int) renderThrottleTimer.elapsed();
++        // if (blockTime > 0) {
++        //     qCDebug(QSG_RASTER_LOG_RENDERLOOP) <<  "RT - blocking for " << blockTime << "ms";
++        //     msleep(blockTime);
++        // }
+         renderThrottleTimer.restart();
+ 
+         wd->fireFrameSwapped();
+-- 
+2.29.0
+
