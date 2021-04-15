@@ -5,7 +5,6 @@
 # Copyright (C) 2019 Ultimaker B.V.
 #
 
-
 set -eu
 
 LOCAL_REGISTRY_IMAGE="qt5-ultimaker"
