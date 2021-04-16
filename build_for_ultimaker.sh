@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# SPDX-License-Identifier: AGPL-3.0+
+# SPDX-License-Identifier: LGPL-3.0+
 #
 # Copyright (C) 2019 Ultimaker B.V.
 #
