@@ -12,6 +12,7 @@ export QT_DEBUG_PLUGINS=1
 export EGL_LOG_LEVEL=debug
 export MESA_DEBUG=1
 export QT_QPA_EGLFS_DEBUG=1
+export QT_LOGGING_RULES = "qt.qpa.input.*=true"
 
 # Other debug environment settings
 export LIBGL_DEBUG=1
