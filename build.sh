@@ -42,6 +42,7 @@ build()
         -extprefix "${TARGET_DIR}/qt" \
         -release \
         -no-xcb \
+        -no-glib \
         -no-xcb-xlib \
         -confirm-license \
         -opensource \
