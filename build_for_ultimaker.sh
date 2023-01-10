@@ -35,7 +35,6 @@ run_in_docker()
         --security-opt seccomp:unconfined \
         --rm \
         -it \
-        -u "$(id -u)" \
         -e "BUILD_DIR=${DOCKER_WORK_DIR}/${BUILD_DIR}" \
         -e "ARCH=${ARCH}" \
         -e "PREFIX=${PREFIX}" \
@@ -46,27 +45,6 @@ run_in_docker()
         -w "${DOCKER_WORK_DIR}" \
         "${LOCAL_REGISTRY_IMAGE}" \
         "${@}"
-}
-
-shell_in_docker()
-{
-    docker run \
-        --privileged \
-        --cap-add=ALL \
-        --security-opt seccomp:unconfined \
-        --rm \
-        -it \
-        -u "$(id -u)" \
-        -e "BUILD_DIR=${DOCKER_WORK_DIR}/${BUILD_DIR}" \
-        -e "ARCH=${ARCH}" \
-        -e "PREFIX=${PREFIX}" \
-        -e "RELEASE_VERSION=${RELEASE_VERSION}" \
-        -e "MAKEFLAGS=-j$(($(getconf _NPROCESSORS_ONLN) - 1))" \
-        -e "CCACHE_DIR=${DOCKER_WORK_DIR}/tools/ccache" \
-        -v "${SRC_DIR}:${DOCKER_WORK_DIR}" \
-        -w "${DOCKER_WORK_DIR}" \
-        "${LOCAL_REGISTRY_IMAGE}" \
-        "/bin/bash"
 }
 
 update_modules()
@@ -144,7 +122,7 @@ while getopts ":cCslh" options; do
         run_env_check="no"
         ;;
     s)
-        shell_in_docker
+        run_in_docker "/bin/bash"
         exit 0
         ;;
     h)
