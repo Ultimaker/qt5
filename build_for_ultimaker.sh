@@ -112,6 +112,14 @@ usage()
     echo "Run './build.sh -h' for more information."
 }
 
+# shellcheck disable=SC2317
+cleanup()
+{
+    run_in_docker chown -Rf "$(id -u):$(id -g)" "${BUILD_DIR}" 2> /dev/null
+}
+
+trap 'cleanup' EXIT
+
 while getopts ":cCslh" options; do
     case "${options}" in
     c)
@@ -160,6 +168,7 @@ if [ "${run_linters}" = "yes" ]; then
 fi
 
 update_modules
+run_in_docker "./build_sysroot.sh"
 run_build "${@}"
 deliver_pkg
 

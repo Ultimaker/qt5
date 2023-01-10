@@ -20,7 +20,7 @@ TARGET_DIR="${DEBIAN_DIR}/opt"
 CROSS_COMPILE="aarch64-linux-gnu-"
 
 TOOLS_DIR="${SRC_DIR}/tools"
-SYSROOT="${TOOLS_DIR}/sysroot"
+SYSROOT="${BUILD_DIR}/sysroot"
 MAKEFLAGS=-j$(($(getconf _NPROCESSORS_ONLN) - 1))
 
 export PKG_CONFIG_PATH=${SYSROOT}/usr/lib/pkgconfig:${SYSROOT}/usr/lib/arm-linux-gnueabihf/pkgconfig:${SYSROOT}/usr/share/pkgconfig:${SYSROOT}/usr/local/lib/pkgconfig
@@ -31,6 +31,10 @@ build()
         mkdir -p "${TARGET_DIR}/qt"
     fi
 
+    echo ""
+    echo "==== Building QT5 ===="
+    echo ""
+    
     cd "${BUILD_DIR}"
     "${SRC_DIR}/configure" \
         -ccache \
@@ -107,7 +111,10 @@ build()
     make "${MAKEFLAGS}"
     make "${MAKEFLAGS}" install
 
-    echo "Finished building."
+    echo ""
+    echo "==== Finish building QT5 ===="
+    echo ""
+
 }
 
 build_pyqt()
@@ -115,6 +122,10 @@ build_pyqt()
     if [ ! -d "${BUILD_DIR}/pyqt" ]; then
         mkdir -p "${BUILD_DIR}/pyqt"
     fi
+
+    echo ""
+    echo "==== Building PyQT ===="
+    echo ""
 
     cd "${BUILD_DIR}/pyqt"
     curl -L -o pyqt5.tar.gz https://sourceforge.net/projects/pyqt/files/PyQt5/PyQt-5.9.2/PyQt5_gpl-5.9.2.tar.gz
@@ -129,8 +140,8 @@ build_pyqt()
         --configuration "${TOOLS_DIR}/pyqt.cfg" \
         --qmake="${BUILD_DIR}/qtbase/bin/qmake"
 
-    make
-    make install
+    make "${MAKEFLAGS}"
+    make "${MAKEFLAGS}" install
 }
 
 create_debian_package()

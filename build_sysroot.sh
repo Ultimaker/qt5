@@ -1,27 +1,28 @@
 #!/bin/bash
 
 # Abort on errors, as well as unset variables. Makes the script less error prone.
-set -eux
+set -eu
 
 # Find the location of this script, as some required things are stored next to it.
 SRC_DIR="$(pwd)"
 TOOLS_DIR="${SRC_DIR}/tools"
 # Toolchain file location for cmake
 TOOLCHAIN_FILE="${TOOLS_DIR}/arm-cross-compile.toolchain"
+
 # Location of the sysroot, which is used during cross compiling
-SYSROOT="${TOOLS_DIR}/sysroot"
+BUILD_DIR="${BUILD_DIR:-${SRC_DIR}/_build}"
+SYSROOT="${BUILD_DIR}/sysroot"
 
-TARGET_ARCH="aarch64"
-# We use the 'type -P' command instead of 'which' since the first one is built-in, faster and has better defined exit values.
-QEMU_BINARY="$(type -P qemu-${TARGET_ARCH}-static)"
-
+COMPLETE_FLAG_FILE="${SYSROOT}/sysroot_complete"
 
 build_sysroot()
 {
-    echo "Going to build sysroot for cross compiling"
+    echo ""
+    echo "==== Building sysroot for cross compiling ===="
+    echo ""
 
     mkdir -p "${SYSROOT}/etc/apt/trusted.gpg.d"
-    curl https://ftp-master.debian.org/keys/archive-key-10.asc | fakeroot apt-key --keyring "${SYSROOT}/etc/apt/trusted.gpg.d/jessie.gpg" add -
+    curl https://ftp-master.debian.org/keys/archive-key-10.asc | apt-key --keyring "${SYSROOT}/etc/apt/trusted.gpg.d/jessie.gpg" add -
 
     multistrap -f "${TOOLS_DIR}/sysroot_multistrap.cfg" -d "${SYSROOT}"
 
@@ -49,8 +50,6 @@ build_sysroot()
     mount --bind "/proc" "${SYSROOT}/proc"
     mount --bind "/sys" "${SYSROOT}/sys"
 
-    cp -f "${QEMU_BINARY}" "${SYSROOT}/usr/bin"
-
     # Install the forked specially configured dependencies
     # TODO: These should also come from cloudsmith and have a correct version number
     cp "${TOOLS_DIR}/"*".deb" "${SYSROOT}"
@@ -62,11 +61,21 @@ build_sysroot()
     umount -lR "${SYSROOT}/proc"
     umount -lR "${SYSROOT}/sys"
 
+    touch "${COMPLETE_FLAG_FILE}"
+
     echo "Finished building sysroot in: ${SYSROOT}"
     echo "You can now use cmake -DCMAKE_TOOLCHAIN_FILE=${TOOLCHAIN_FILE} to build software"
 }
 
-trap umount -lR "${SYSROOT}/dev" || true; umount -lR "${SYSROOT}/proc" || true; umount -lR "${SYSROOT}/sys" || true exit
+# shellcheck disable=SC2317
+cleanup()
+{
+    umount -qlR "${SYSROOT}/dev" || true; 
+    umount -qlR "${SYSROOT}/proc" || true; 
+    umount -qlR "${SYSROOT}/sys" || true exit
+}
+
+trap 'cleanup' EXIT
 
 
 if [ ! "$(id -u)" -eq 0 ]; then
@@ -79,20 +88,12 @@ usage()
     echo ""
     echo "This is a build script for generation of a Debian based sysroot that can be used for cross-compiling."
     echo ""
-    echo "  -c Clean the build output directory '_build'."
     echo "  -h Print this help text and exit"
     echo ""
-    echo "  The package release version can be passed by passing 'RELEASE_VERSION' through the run environment."
 }
 
-while getopts ":ch" options; do
+while getopts ":h" options; do
     case "${options}" in
-    c)
-        if [ -d "${SYSROOT}" ] && [ -z "${SYSROOT##*sysroot*}" ]; then
-            rm -rf "${SYSROOT}"
-        fi
-        exit 0
-        ;;
     h)
         usage
         exit 0
@@ -116,10 +117,13 @@ if [ "${#}" -gt 1 ]; then
     exit 1
 fi
 
-if [ "${#}" -eq 0 ]; then
+if [ -f "${COMPLETE_FLAG_FILE}" ]; then
+    echo ""
+    echo "==== Sysroot already done, skipping sysroot build. ===="
+    echo ""
+else
+    rm -rf "${SYSROOT}"
     build_sysroot
-    exit 0
 fi
-
 
 exit 0
