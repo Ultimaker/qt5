@@ -17,6 +17,7 @@ RELEASE_VERSION="${RELEASE_VERSION:-5.12.3}"
 DOCKER_WORK_DIR="/docker_workdir"
 BUILD_DIR_TEMPLATE="_build"
 BUILD_DIR="${BUILD_DIR_TEMPLATE}_${ARCH}_${UM_ARCH}"
+QT_CONFIG_FLAGS="${QT_CONFIG_FLAGS:-}"
 run_linters="yes"
 run_env_check="yes"
 
@@ -41,6 +42,7 @@ run_in_docker()
         -e "RELEASE_VERSION=${RELEASE_VERSION}" \
         -e "MAKEFLAGS=-j$(($(getconf _NPROCESSORS_ONLN) - 1))" \
         -e "CCACHE_DIR=${DOCKER_WORK_DIR}/tools/ccache" \
+        -e "QT_CONFIG_FLAGS=${QT_CONFIG_FLAGS}" \
         -v "${SRC_DIR}:${DOCKER_WORK_DIR}" \
         -w "${DOCKER_WORK_DIR}" \
         "${LOCAL_REGISTRY_IMAGE}" \

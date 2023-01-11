@@ -23,27 +23,13 @@ TOOLS_DIR="${SRC_DIR}/tools"
 SYSROOT="${BUILD_DIR}/sysroot"
 MAKEFLAGS=-j$(($(getconf _NPROCESSORS_ONLN) - 1))
 
-export PKG_CONFIG_PATH=${SYSROOT}/usr/lib/pkgconfig:${SYSROOT}/usr/lib/arm-linux-gnueabihf/pkgconfig:${SYSROOT}/usr/share/pkgconfig:${SYSROOT}/usr/local/lib/pkgconfig
-
-build()
-{
-    if [ ! -d "${TARGET_DIR}/qt" ]; then
-        mkdir -p "${TARGET_DIR}/qt"
-    fi
-
-    echo ""
-    echo "==== Building QT5 ===="
-    echo ""
-    
-    cd "${BUILD_DIR}"
-    "${SRC_DIR}/configure" \
-        -ccache \
+QT_DEFAULT_CONFIG_FLAGS="-ccache \
         -v \
         -platform linux-g++-64 \
         -device ultimaker-linux-imx8m-eglfs-g++ \
-        -device-option CROSS_COMPILE="${CROSS_COMPILE}" \
-        -sysroot "${SYSROOT}" \
-        -extprefix "${TARGET_DIR}/qt" \
+        -device-option CROSS_COMPILE=${CROSS_COMPILE} \
+        -sysroot ${SYSROOT} \
+        -extprefix ${TARGET_DIR}/qt \
         -release \
         -no-xcb \
         -no-glib \
@@ -98,11 +84,28 @@ build()
         -skip qtwebview \
         -skip qtsystems \
         -skip qtwebview \
-        -skip qt3d
+        -skip qt3d"
 
 # Add the following to build the examples and remove the -nomake-examples
 #        -compile-examples \
 #        -examplesdir /usr/share/examples \
+
+QT_CONFIG_FLAGS="${QT_CONFIG_FLAGS:-${QT_DEFAULT_CONFIG_FLAGS}}"
+
+export PKG_CONFIG_PATH=${SYSROOT}/usr/lib/pkgconfig:${SYSROOT}/usr/lib/arm-linux-gnueabihf/pkgconfig:${SYSROOT}/usr/share/pkgconfig:${SYSROOT}/usr/local/lib/pkgconfig
+
+build()
+{
+    if [ ! -d "${TARGET_DIR}/qt" ]; then
+        mkdir -p "${TARGET_DIR}/qt"
+    fi
+
+    echo ""
+    echo "==== Building QT5 ===="
+    echo ""
+    
+    cd "${BUILD_DIR}"
+    "${SRC_DIR}/configure" "${QT_CONFIG_FLAGS}"
 
     if [ ! -d "${TOOLS_DIR}/ccache" ]; then
         mkdir -p "${TOOLS_DIR}/ccache"
