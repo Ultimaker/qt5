@@ -97,11 +97,6 @@ deliver_pkg()
     cp "${SRC_DIR}/${BUILD_DIR}/"*"deb" "${SRC_DIR}"
 }
 
-run_tests()
-{
-    echo "There are no tests available for this repository."
-}
-
 usage()
 {
     echo "Usage: ${0} [OPTIONS]"
