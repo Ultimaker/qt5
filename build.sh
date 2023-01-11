@@ -105,7 +105,9 @@ build()
     echo ""
     
     cd "${BUILD_DIR}"
-    "${SRC_DIR}/configure" "${QT_CONFIG_FLAGS}"
+
+# shellcheck disable=SC2086
+    "${SRC_DIR}/configure" ${QT_CONFIG_FLAGS}
 
     if [ ! -d "${TOOLS_DIR}/ccache" ]; then
         mkdir -p "${TOOLS_DIR}/ccache"
