@@ -34,7 +34,7 @@ build()
     cd "${BUILD_DIR}"
     "${SRC_DIR}/configure" \
         -ccache \
-        -v \
+        -verbose \
         -platform linux-g++-64 \
         -device ultimaker-linux-imx8m-eglfs-g++ \
         -device-option CROSS_COMPILE="${CROSS_COMPILE}" \
