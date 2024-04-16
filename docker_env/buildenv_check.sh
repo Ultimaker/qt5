@@ -1,5 +1,5 @@
 #!/bin/sh
-
+# shellcheck disable=SC2317  # Don't warn about unreachable commands in this file
 set -eu
 
 TEST_DIR=$(mktemp -d)

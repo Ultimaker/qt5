@@ -1,5 +1,5 @@
 #!/bin/sh
-#
+# shellcheck disable=SC2317  # Don't warn about unreachable commands in this file
 # SPDX-License-Identifier: AGPL-3.0+
 #
 # Copyright (C) 2019 Ultimaker B.V.
