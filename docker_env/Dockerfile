@@ -1,4 +1,4 @@
-FROM debian:buster-slim
+FROM debian:bullseye-slim
 
 LABEL Maintainer="software-embedded@ultimaker.com" \
       Comment="Ultimaker buster build environment"
