@@ -244,27 +244,6 @@
 	url = http://code.qt.io/qt/qtpurchasing.git
 	branch = 5.12.3
 	status = addon
-[submodule "qtcharts"]
-	depends = qtbase
-	recommends = qtdeclarative qtmultimedia
-	path = qtcharts
-	url = http://code.qt.io/qt/qtcharts.git
-	branch = 5.12.3
-	status = addon
-[submodule "qtdatavis3d"]
-	depends = qtbase
-	recommends = qtdeclarative qtmultimedia
-	path = qtdatavis3d
-	url = http://code.qt.io/qt/qtdatavis3d.git
-	branch = 5.12.3
-	status = addon
-[submodule "qtvirtualkeyboard"]
-	depends = qtbase qtdeclarative qtsvg
-	recommends = qtmultimedia qtquickcontrols
-	path = qtvirtualkeyboard
-	url = http://code.qt.io/qt/qtvirtualkeyboard.git
-	branch = 5.12.3
-	status = addon
 [submodule "qtgamepad"]
 	depends = qtbase
 	recommends = qtdeclarative
@@ -283,12 +262,6 @@
 	recommends = qtdeclarative qtmultimedia
 	path = qtspeech
 	url = http://code.qt.io/qt/qtspeech.git
-	branch = 5.12.3
-	status = addon
-[submodule "qtnetworkauth"]
-	depends = qtbase
-	path = qtnetworkauth
-	url = http://code.qt.io/qt/qtnetworkauth.git
 	branch = 5.12.3
 	status = addon
 [submodule "qtremoteobjects"]
