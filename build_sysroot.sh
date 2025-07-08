@@ -22,6 +22,14 @@ build_sysroot()
 
     mkdir -p "${SYSROOT}/etc/apt/trusted.gpg.d"
     curl https://ftp-master.debian.org/keys/archive-key-10.asc | fakeroot apt-key --keyring "${SYSROOT}/etc/apt/trusted.gpg.d/jessie.gpg" add -
+    curl https://ftp-master.debian.org/keys/release-10.asc     | fakeroot apt-key --keyring "${SYSROOT}/etc/apt/trusted.gpg.d/jessie.gpg" add -
+    curl https://ftp-master.debian.org/keys/archive-key-11.asc | fakeroot apt-key --keyring "${SYSROOT}/etc/apt/trusted.gpg.d/jessie.gpg" add -
+    curl https://ftp-master.debian.org/keys/release-11.asc     | fakeroot apt-key --keyring "${SYSROOT}/etc/apt/trusted.gpg.d/jessie.gpg" add -
+    curl https://ftp-master.debian.org/keys/archive-key-12.asc | fakeroot apt-key --keyring "${SYSROOT}/etc/apt/trusted.gpg.d/jessie.gpg" add -
+    curl https://ftp-master.debian.org/keys/release-12.asc     | fakeroot apt-key --keyring "${SYSROOT}/etc/apt/trusted.gpg.d/jessie.gpg" add -
+    
+
+    
 
     multistrap -f "${TOOLS_DIR}/sysroot_multistrap.cfg" -d "${SYSROOT}"
 
@@ -53,10 +61,10 @@ build_sysroot()
 
     # Install the forked specially configured dependencies
     # TODO: These should also come from cloudsmith and have a correct version number
-    cp "${TOOLS_DIR}/"*".deb" "${SYSROOT}"
+#    cp "${TOOLS_DIR}/"*".deb" "${SYSROOT}"
 
-    chroot "${SYSROOT}" /usr/bin/dpkg -i /libdrm-ultimaker_2.4.102-imx8m_arm64.deb
-    chroot "${SYSROOT}" /usr/bin/dpkg -i /mesa-ultimaker_19.0.1-imx8m_arm64.deb
+#    chroot "${SYSROOT}" /usr/bin/dpkg -i /libdrm-ultimaker_2.4.102-imx8m_arm64.deb
+#    chroot "${SYSROOT}" /usr/bin/dpkg -i /mesa-ultimaker_19.0.1-imx8m_arm64.deb
 
     umount -lR "${SYSROOT}/dev"
     umount -lR "${SYSROOT}/proc"

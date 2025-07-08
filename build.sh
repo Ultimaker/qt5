@@ -48,12 +48,12 @@ build()
         -opensource \
         -pkg-config \
         -linuxfb \
-        -eglfs \
+        -no-eglfs \
         -opengl es2 \
         -xkbcommon \
         -openssl \
-        -gbm \
-        -kms \
+        -no-gbm \
+        -no-kms \
         -no-directfb \
         -nomake tests \
         -nomake tools \
