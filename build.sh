@@ -88,7 +88,6 @@ build()
         -skip qtpim \
         -skip qtpurchasing \
         -skip qtremoteobjects \
-        -skip qtwebview \
         -skip qtsystems \
         -skip qtwebview \
         -skip qt3d
