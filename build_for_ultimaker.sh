@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # SPDX-License-Identifier: AGPL-3.0+
 #
@@ -7,67 +7,14 @@
 
 set -eu
 
-LOCAL_REGISTRY_IMAGE="qt5-ultimaker"
-
-ARCH="${ARCH:-arm64}" # armhf or x86_64, or arm64
-UM_ARCH="${UM_ARCH:-imx8m}" # Empty string, sun7i for R1, or imx6dl for R2, or imx8m for colorado
 SRC_DIR="$(pwd)"
-PREFIX="/usr"
-RELEASE_VERSION="${RELEASE_VERSION:-5.12.3}"
-DOCKER_WORK_DIR="/docker_workdir"
-BUILD_DIR_TEMPLATE="_build"
-BUILD_DIR="${BUILD_DIR_TEMPLATE}_${ARCH}_${UM_ARCH}"
+RELEASE_VERSION="${RELEASE_VERSION:-999.999.999}"
+DOCKER_WORK_DIR="/build"
+
 run_linters="yes"
 run_env_check="yes"
-
-
-update_docker_image()
-{
-    echo "Building local Docker build environment."
-    docker build ./docker_env -t "${LOCAL_REGISTRY_IMAGE}"
-}
-
-run_in_docker()
-{
-    docker run \
-        --privileged \
-        --cap-add=ALL \
-        --security-opt seccomp:unconfined \
-        --rm \
-        -it \
-        -u "$(id -u)" \
-        -e "BUILD_DIR=${DOCKER_WORK_DIR}/${BUILD_DIR}" \
-        -e "ARCH=${ARCH}" \
-        -e "PREFIX=${PREFIX}" \
-        -e "RELEASE_VERSION=${RELEASE_VERSION}" \
-        -e "MAKEFLAGS=-j$(($(getconf _NPROCESSORS_ONLN) - 1))" \
-        -e "CCACHE_DIR=${DOCKER_WORK_DIR}/tools/ccache" \
-        -v "${SRC_DIR}:${DOCKER_WORK_DIR}" \
-        -w "${DOCKER_WORK_DIR}" \
-        "${LOCAL_REGISTRY_IMAGE}" \
-        "${@}"
-}
-
-shell_in_docker()
-{
-    docker run \
-        --privileged \
-        --cap-add=ALL \
-        --security-opt seccomp:unconfined \
-        --rm \
-        -it \
-        -u "$(id -u)" \
-        -e "BUILD_DIR=${DOCKER_WORK_DIR}/${BUILD_DIR}" \
-        -e "ARCH=${ARCH}" \
-        -e "PREFIX=${PREFIX}" \
-        -e "RELEASE_VERSION=${RELEASE_VERSION}" \
-        -e "MAKEFLAGS=-j$(($(getconf _NPROCESSORS_ONLN) - 1))" \
-        -e "CCACHE_DIR=${DOCKER_WORK_DIR}/tools/ccache" \
-        -v "${SRC_DIR}:${DOCKER_WORK_DIR}" \
-        -w "${DOCKER_WORK_DIR}" \
-        "${LOCAL_REGISTRY_IMAGE}" \
-        "/bin/bash"
-}
+action="none"
+rebuild_docker="no"
 
 update_modules()
 {
@@ -91,10 +38,10 @@ run_shellcheck()
 {
     docker run \
         --rm \
-        -v "$(pwd):${DOCKER_WORK_DIR}" \
+        -v "${SRC_DIR}:${DOCKER_WORK_DIR}" \
         -w "${DOCKER_WORK_DIR}" \
         "registry.hub.docker.com/koalaman/shellcheck-alpine:stable" \
-        "docker_env/run_shellcheck.sh"
+        "./run_shellcheck.sh"
 }
 
 env_check()
@@ -104,6 +51,8 @@ env_check()
 
 run_build()
 {
+    update_modules
+    
     run_in_docker "./build.sh" "${@}"
 }
 
@@ -112,36 +61,35 @@ run_linters()
     run_shellcheck
 }
 
-deliver_pkg()
-{
-    cp "${SRC_DIR}/${BUILD_DIR}/"*"deb" "${SRC_DIR}"
-}
-
 usage()
 {
     echo "Usage: ${0} [OPTIONS]"
-    echo "  -c   Clean the workspace"
-    echo "  -C   Skip run of build environment checks"
+    echo "  -a   Run a specific action. It can be: docker_build,"
+    echo "       shellcheck, lint, cppcheck, clang-tidy,"
+    echo "       clang-format_check, build, unittest"    
+    echo "  -c   Skip run of build environment checks"
+    echo "  -d   Build a docker image from Dockerfile tagged as latest"
+    echo "       and use it for the remaining build steps. It is meant"
+    echo "       for testing a new Dockerfile release"    
     echo "  -l   Skip running the shellcheck linter"
     echo "  -h   Print usage"
+    echo "  -t   Skip tests"    
     echo
     echo "Other options will be passed on to build.sh"
     echo "Run './build.sh -h' for more information."
 }
 
-while getopts ":cCslh" options; do
+while getopts ":cdlha:" options; do
     case "${options}" in
+    a)
+        action="${OPTARG}"
+        ;;        
     c)
-        run_build "${@}"
-        exit 0
-        ;;
-    C)
         run_env_check="no"
         ;;
-    s)
-        shell_in_docker
-        exit 0
-        ;;
+    d)
+        rebuild_docker="yes"
+        ;;        
     h)
         usage
         exit 0
@@ -166,7 +114,37 @@ if ! command -V docker; then
     exit 1
 fi
 
-update_docker_image
+source ./docker_env/make_docker.sh qt5-ultimaker
+
+if [[ "${rebuild_docker}" == "yes" || "${action}" == "docker_build" ]]; then
+    DOCKER_IMAGE_NAME="${DOCKER_IMAGE_NAME:-qt5-ultimaker}"
+    DOCKER_IMAGE_VERSION="${DOCKER_IMAGE_VERSION:-latest}"
+    build_docker
+fi;
+
+case "${action}" in
+    shell)
+        run_in_docker bash
+        exit 0
+        ;;
+    shellcheck)
+        run_shellcheck
+        exit 0
+        ;;
+    build)
+        run_build
+        exit 0
+        ;;
+    docker_build)
+        exit 0
+        ;;
+    none)
+        ;;
+    ?)
+        echo "Invalid action: -${OPTARG}"
+        exit 1
+        ;;
+esac
 
 if [ "${run_env_check}" = "yes" ]; then
     env_check
@@ -176,8 +154,6 @@ if [ "${run_linters}" = "yes" ]; then
     run_linters
 fi
 
-update_modules
 run_build "${@}"
-deliver_pkg
 
 exit 0
