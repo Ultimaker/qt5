@@ -23,6 +23,8 @@ TOOLS_DIR="${SRC_DIR}/tools"
 SYSROOT="${TOOLS_DIR}/sysroot"
 MAKEFLAGS=-j$(($(getconf _NPROCESSORS_ONLN) - 1))
 
+PYQT_TARGET_PYTHON_VERSION="3.11"
+
 export PKG_CONFIG_PATH=${SYSROOT}/usr/lib/pkgconfig:${SYSROOT}/usr/lib/arm-linux-gnueabihf/pkgconfig:${SYSROOT}/usr/share/pkgconfig:${SYSROOT}/usr/local/lib/pkgconfig
 
 build()
@@ -123,10 +125,11 @@ build_pyqt()
         --qml-debug --qml-plugindir="${TARGET_DIR}/pyqt" \
         --destdir "${TARGET_DIR}/pyqt" \
         --configuration "${TOOLS_DIR}/pyqt.cfg" \
+        --target-py-version="${PYQT_TARGET_PYTHON_VERSION}" \
         --qmake="${BUILD_DIR}/qtbase/bin/qmake"
 
-    make
-    make install
+    make "${MAKEFLAGS}"
+    make "${MAKEFLAGS}" install
 }
 
 create_debian_package()
