@@ -8,7 +8,7 @@ UM_ARCH="${UM_ARCH:-imx8m}" # Empty string, or sun7i for R1, or imx6dl for R2, o
 
 SRC_DIR="$(pwd)"
 BUILD_DIR_TEMPLATE="_build"
-BUILD_DIR="${BUILD_DIR:-${SRC_DIR}/${BUILD_DIR_TEMPLATE}_${ARCH}_${UM_ARCH}}"
+BUILD_DIR="${BUILD_DIR:-${SRC_DIR}/${BUILD_DIR_TEMPLATE}_${UM_ARCH}}"
 
 
 # Debian package information
@@ -31,10 +31,20 @@ PYQT_TARGET_PYTHON_VERSION="3.11"
 
 export PKG_CONFIG_PATH=${SYSROOT}/usr/lib/pkgconfig:${SYSROOT}/usr/lib/arm-linux-gnueabihf/pkgconfig:${SYSROOT}/usr/share/pkgconfig:${SYSROOT}/usr/local/lib/pkgconfig
 
+# Add the UM_ARCH (if any) to release version keeping a possible -dev on the most right side
+if [ -n "${UM_ARCH}" ]; then
+    if [[ ${RELEASE_VERSION} == *'-dev' ]]; then
+        RELEASE_VERSION="${RELEASE_VERSION/-dev/-${UM_ARCH}-dev}"
+    else
+        RELEASE_VERSION="${RELEASE_VERSION}-${UM_ARCH}"
+    fi;
+fi;
+
 build_sysroot()
 {
     echo "Going to build sysroot for cross compiling"
 
+    rm -rf "${SYSROOT}"
     mkdir -p "${SYSROOT}/etc/apt/trusted.gpg.d"
     rm -rf "${SYSROOT}/etc/apt/trusted.gpg.d/debian-keyring.gpg"
     curl https://ftp-master.debian.org/keys/archive-key-11.asc | gpg --dearmor >> "${SYSROOT}/etc/apt/trusted.gpg.d/debian-keyring.gpg"
@@ -174,23 +184,17 @@ create_debian_package()
     mkdir -p "${DEBIAN_DIR}/DEBIAN"
     sed -e 's|@ARCH@|'"${ARCH}"'|g' \
         -e 's|@PACKAGE_NAME@|'"${PACKAGE_NAME}"'|g' \
-        -e 's|@RELEASE_VERSION@|'"${RELEASE_VERSION}-${UM_ARCH}"'|g' \
+        -e 's|@RELEASE_VERSION@|'"${RELEASE_VERSION}"'|g' \
         "${SRC_DIR}/debian/control.in" > "${DEBIAN_DIR}/DEBIAN/control"
 
-    DEB_PACKAGE="${PACKAGE_NAME}_${RELEASE_VERSION}_${ARCH}-${UM_ARCH}.deb"
-
-    # Add the QT runtime environment source script
-    mkdir -p "${DEBIAN_DIR}/etc/qt5"
-    cp "${SRC_DIR}/set_qt5_eglfs_env" 			"${DEBIAN_DIR}/etc/qt5"
-    cp "${SRC_DIR}/qt_eglfs_kms_cfg.json" 		"${DEBIAN_DIR}/etc/qt5"
-    chmod +x "${DEBIAN_DIR}/etc/qt5/set_qt5_eglfs_env"
+    DEB_PACKAGE="${PACKAGE_NAME}_${RELEASE_VERSION}_${ARCH}.deb"
 
     # Build the Debian package
     dpkg-deb --build "${DEBIAN_DIR}" "${BUILD_DIR}/${DEB_PACKAGE}"
 
     mv "${BUILD_DIR}/${DEB_PACKAGE}" "${SRC_DIR}"
 
-    echo "Finished building Debian package."
+    echo "Finished building of Debian package version: ${RELEASE_VERSION}"
     echo "To check the contents of the Debian package run 'dpkg-deb -c *.deb'"
 }
 
