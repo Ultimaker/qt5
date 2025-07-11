@@ -4,7 +4,7 @@
 set -eu
 
 ARCH="${ARCH:-arm64}" # armhf or x86_64 or amr64
-UM_ARCH="${UM_ARCH:-imx8m}" # Empty string, or sun7i for R1, or imx6dl for R2, or imx8m for colorado
+UM_ARCH="${UM_ARCH:-imx8}" # Empty string, or sun7i for R1, or imx6dl for R2, or imx8m for colorado
 
 SRC_DIR="$(pwd)"
 BUILD_DIR_TEMPLATE="_build"
@@ -84,7 +84,7 @@ build()
         -ccache \
         -v \
         -platform linux-g++-64 \
-        -device ultimaker-linux-imx8m-eglfs-g++ \
+        -device ultimaker-linux-imx8-g++ \
         -device-option CROSS_COMPILE="${CROSS_COMPILE}" \
         -sysroot "${SYSROOT}" \
         -extprefix "${TARGET_DIR}/qt" \
