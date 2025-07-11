@@ -73,7 +73,6 @@ usage()
     echo "       for testing a new Dockerfile release"    
     echo "  -l   Skip running the shellcheck linter"
     echo "  -h   Print usage"
-    echo "  -t   Skip tests"    
     echo
     echo "Other options will be passed on to build.sh"
     echo "Run './build.sh -h' for more information."
