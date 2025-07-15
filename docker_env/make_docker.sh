@@ -1,0 +1,66 @@
+#!/bin/bash
+#
+# Copyright (C) 2025 Ultimaker B.V.
+
+set -eu
+
+# When releasing a new docker image, update the version below to match the one uploaded to Github
+DOCKER_IMAGE_RELEASED="v1"
+DOCKER_IMAGE_CACHE="ghcr.io/ultimaker/qt5-ultimaker"
+
+# Creates a new docker driver named "ultimaker" if it doesnt exist yet.
+docker buildx create --name ultimaker --driver=docker-container 2> /dev/null || true
+
+set_docker_image_name_version()
+{
+    DOCKER_IMAGE_NAME="${DOCKER_IMAGE_NAME:-${DOCKER_IMAGE_CACHE}}"
+    DOCKER_IMAGE_VERSION="${DOCKER_IMAGE_VERSION:-${DOCKER_IMAGE_RELEASED}}"
+}
+
+build_docker()
+{
+    set_docker_image_name_version
+
+    echo "Building image ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_VERSION}"
+        docker buildx build --builder ultimaker --load \
+                --cache-from "${DOCKER_IMAGE_CACHE}" \
+                --cache-to "${DOCKER_IMAGE_CACHE}" \
+                -f docker_env/Dockerfile \
+                -t "${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_VERSION}" .
+
+    if ! docker run --rm --privileged "${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_VERSION}" "./buildenv_check.sh"; then
+        echo "Something is wrong with the build environment, please check your Dockerfile."
+        docker image rm "${DOCKER_IMAGE_NAME}"
+        exit 1
+    fi
+}
+
+# This section actually runs the parameters in the docker image
+DOCKER_WORK_DIR="${DOCKER_WORK_DIR:-/build}"
+
+run_in_docker()
+{
+    set_docker_image_name_version
+
+    echo "Running '${*}' in docker."
+    # In order to run local kernel config tools, like menuconfig, we need to attach a tty to the docker,
+    # but that will fail in CI. So we first check if we have a tty and then add the "-t" argument. The
+    # standart input attach ("-i") is safe to keep there, even in CI.
+    terminal_arg="-i";
+    if tty; then
+        terminal_arg="-it"        
+    fi;
+        
+    docker run \
+        --rm \
+        "${terminal_arg}" \
+        --privileged \
+        -u "$(id -u):$(id -g)" \
+        -v "$(pwd):${DOCKER_WORK_DIR}" \
+        -v /etc/localtime:/etc/localtime:ro \
+        -v /etc/timezone:/etc/timezone:ro \
+        -e "RELEASE_VERSION=${RELEASE_VERSION:-999.999.999}" \
+        -w "${DOCKER_WORK_DIR}" \
+        "${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_VERSION}" \
+        "${@:-}"
+}

@@ -4,39 +4,87 @@
 set -eu
 
 ARCH="${ARCH:-arm64}" # armhf or x86_64 or amr64
-UM_ARCH="${UM_ARCH:-imx8m}" # Empty string, or sun7i for R1, or imx6dl for R2, or imx8m for colorado
+UM_ARCH="${UM_ARCH:-imx8}" # Empty string, or sun7i for R1, or imx6dl for R2, or imx8m for colorado
 
 SRC_DIR="$(pwd)"
-BUILD_DIR="${BUILD_DIR:-${SRC_DIR}/${BUILD_DIR_TEMPLATE}_${ARCH}_${UM_ARCH}}"
+BUILD_DIR_TEMPLATE="_build"
+BUILD_DIR="${BUILD_DIR:-${SRC_DIR}/${BUILD_DIR_TEMPLATE}_${UM_ARCH}}"
+
 
 # Debian package information
 PACKAGE_NAME="${PACKAGE_NAME:-qt-ultimaker}"
 QT_VERSION="5.12.3"
 RELEASE_VERSION="${RELEASE_VERSION:-${QT_VERSION}}"
-EXTRA_VERSION="${EXTRA_VERSION:-eglfs}"
 
 DEBIAN_DIR="${BUILD_DIR}/debian"
 TARGET_DIR="${DEBIAN_DIR}/opt"
 CROSS_COMPILE="aarch64-linux-gnu-"
 
 TOOLS_DIR="${SRC_DIR}/tools"
-SYSROOT="${TOOLS_DIR}/sysroot"
-MAKEFLAGS=-j$(($(getconf _NPROCESSORS_ONLN) - 1))
+SYSROOT="${BUILD_DIR}/sysroot"
+
+cpu_cnt="$(nproc)"
+export MAKEFLAGS="-j${cpu_cnt}"
+export CCACHE_DIR="${BUILD_DIR}/ccache"
+
+PYQT_TARGET_PYTHON_VERSION="3.11"
 
 export PKG_CONFIG_PATH=${SYSROOT}/usr/lib/pkgconfig:${SYSROOT}/usr/lib/arm-linux-gnueabihf/pkgconfig:${SYSROOT}/usr/share/pkgconfig:${SYSROOT}/usr/local/lib/pkgconfig
 
+# Add the UM_ARCH (if any) to release version keeping a possible -dev on the most right side
+if [ -n "${UM_ARCH}" ]; then
+    if [[ ${RELEASE_VERSION} == *'-dev' ]]; then
+        RELEASE_VERSION="${RELEASE_VERSION/-dev/-${UM_ARCH}-dev}"
+    else
+        RELEASE_VERSION="${RELEASE_VERSION}-${UM_ARCH}"
+    fi;
+fi;
+
+build_sysroot()
+{
+    echo "Going to build sysroot for cross compiling"
+
+    rm -rf "${SYSROOT}"
+    mkdir -p "${SYSROOT}/etc/apt/trusted.gpg.d"
+    rm -rf "${SYSROOT}/etc/apt/trusted.gpg.d/debian-keyring.gpg"
+    curl https://ftp-master.debian.org/keys/archive-key-11.asc | gpg --dearmor >> "${SYSROOT}/etc/apt/trusted.gpg.d/debian-keyring.gpg"
+    curl https://ftp-master.debian.org/keys/release-11.asc | gpg --dearmor >> "${SYSROOT}/etc/apt/trusted.gpg.d/debian-keyring.gpg"
+
+    multistrap -f "${TOOLS_DIR}/sysroot_multistrap.cfg" -d "${SYSROOT}"
+
+    # Fix up the symlinks in the sysroot, find all links that start with absolute paths
+    #  and replace them with relative paths inside the sysroot.
+    cd "${SYSROOT}"
+    symlinks="$(find . -type l)"
+    for file in ${symlinks}
+    do
+        link="$(readlink "${file}" || echo '')"
+        if [ -n "${link}" ]
+        then
+            if [ "${link:0:1}" == "/" ]
+            then
+                if [ -e "${SYSROOT}/${link}" ]; then
+                    rm "${file}"
+                    ln --relative -sf "${SYSROOT}${link}" "${file}"
+                fi
+            fi
+        fi
+    done
+    cd "${SRC_DIR}"
+
+    echo "Finished building sysroot in: ${SYSROOT}"
+}
+
 build()
 {
-    if [ ! -d "${TARGET_DIR}/qt" ]; then
-        mkdir -p "${TARGET_DIR}/qt"
-    fi
+    mkdir -p "${TARGET_DIR}/qt"
 
     cd "${BUILD_DIR}"
     "${SRC_DIR}/configure" \
         -ccache \
         -v \
         -platform linux-g++-64 \
-        -device ultimaker-linux-imx8m-eglfs-g++ \
+        -device ultimaker-linux-imx8-g++ \
         -device-option CROSS_COMPILE="${CROSS_COMPILE}" \
         -sysroot "${SYSROOT}" \
         -extprefix "${TARGET_DIR}/qt" \
@@ -48,12 +96,12 @@ build()
         -opensource \
         -pkg-config \
         -linuxfb \
-        -eglfs \
+        -no-eglfs \
         -opengl es2 \
         -xkbcommon \
         -openssl \
-        -gbm \
-        -kms \
+        -no-gbm \
+        -no-kms \
         -no-directfb \
         -nomake tests \
         -nomake tools \
@@ -88,7 +136,6 @@ build()
         -skip qtpim \
         -skip qtpurchasing \
         -skip qtremoteobjects \
-        -skip qtwebview \
         -skip qtsystems \
         -skip qtwebview \
         -skip qt3d
@@ -97,9 +144,7 @@ build()
 #        -compile-examples \
 #        -examplesdir /usr/share/examples \
 
-    if [ ! -d "${TOOLS_DIR}/ccache" ]; then
-        mkdir -p "${TOOLS_DIR}/ccache"
-    fi
+    mkdir -p "${CCACHE_DIR}"
 
     make "${MAKEFLAGS}"
     make "${MAKEFLAGS}" install
@@ -109,9 +154,7 @@ build()
 
 build_pyqt()
 {
-    if [ ! -d "${BUILD_DIR}/pyqt" ]; then
-        mkdir -p "${BUILD_DIR}/pyqt"
-    fi
+    mkdir -p "${BUILD_DIR}/pyqt"
 
     cd "${BUILD_DIR}/pyqt"
     curl -L -o pyqt5.tar.gz https://sourceforge.net/projects/pyqt/files/PyQt5/PyQt-5.9.2/PyQt5_gpl-5.9.2.tar.gz
@@ -124,10 +167,14 @@ build_pyqt()
         --qml-debug --qml-plugindir="${TARGET_DIR}/pyqt" \
         --destdir "${TARGET_DIR}/pyqt" \
         --configuration "${TOOLS_DIR}/pyqt.cfg" \
-        --qmake="${BUILD_DIR}/qtbase/bin/qmake"
+        --target-py-version="${PYQT_TARGET_PYTHON_VERSION}" \
+        --qmake="${BUILD_DIR}/qtbase/bin/qmake" \
+        --no-sip-files \
+        --no-stubs \
+        --no-tools
 
-    make
-    make install
+    make "${MAKEFLAGS}"
+    make "${MAKEFLAGS}" install
 }
 
 create_debian_package()
@@ -137,21 +184,17 @@ create_debian_package()
     mkdir -p "${DEBIAN_DIR}/DEBIAN"
     sed -e 's|@ARCH@|'"${ARCH}"'|g' \
         -e 's|@PACKAGE_NAME@|'"${PACKAGE_NAME}"'|g' \
-        -e 's|@RELEASE_VERSION@|'"${RELEASE_VERSION}-${UM_ARCH}+${EXTRA_VERSION}"'|g' \
+        -e 's|@RELEASE_VERSION@|'"${RELEASE_VERSION}"'|g' \
         "${SRC_DIR}/debian/control.in" > "${DEBIAN_DIR}/DEBIAN/control"
 
-    DEB_PACKAGE="${PACKAGE_NAME}_${RELEASE_VERSION}_${ARCH}-${UM_ARCH}_${EXTRA_VERSION}.deb"
-
-    # Add the QT runtime environment source script
-    mkdir -p "${DEBIAN_DIR}/etc/qt5"
-    cp "${SRC_DIR}/set_qt5_eglfs_env" 			"${DEBIAN_DIR}/etc/qt5"
-    cp "${SRC_DIR}/qt_eglfs_kms_cfg.json" 		"${DEBIAN_DIR}/etc/qt5"
-    chmod +x "${DEBIAN_DIR}/etc/qt5/set_qt5_eglfs_env"
+    DEB_PACKAGE="${PACKAGE_NAME}_${RELEASE_VERSION}_${ARCH}.deb"
 
     # Build the Debian package
     dpkg-deb --build "${DEBIAN_DIR}" "${BUILD_DIR}/${DEB_PACKAGE}"
 
-    echo "Finished building Debian package."
+    mv "${BUILD_DIR}/${DEB_PACKAGE}" "${SRC_DIR}"
+
+    echo "Finished building of Debian package version: ${RELEASE_VERSION}"
     echo "To check the contents of the Debian package run 'dpkg-deb -c *.deb'"
 }
 
@@ -197,7 +240,15 @@ if [ "${#}" -gt 1 ]; then
     exit 1
 fi
 
+
+# Clean any lingering file from previous build
+clean_debian_dir() {
+    rm -rf "${DEBIAN_DIR}"
+}
+
 if [ "${#}" -eq 0 ]; then
+    build_sysroot
+    clean_debian_dir
     build
     build_pyqt
     create_debian_package
@@ -206,6 +257,8 @@ fi
 
 case "${1-}" in
     deb)
+        build_sysroot
+        clean_debian_dir
         build
         build_pyqt
         create_debian_package
