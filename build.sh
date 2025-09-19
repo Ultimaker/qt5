@@ -47,8 +47,11 @@ build_sysroot()
     rm -rf "${SYSROOT}"
     mkdir -p "${SYSROOT}/etc/apt/trusted.gpg.d"
     rm -rf "${SYSROOT}/etc/apt/trusted.gpg.d/debian-keyring.gpg"
+    # shellcheck disable=SC2129
     curl https://ftp-master.debian.org/keys/archive-key-11.asc | gpg --dearmor >> "${SYSROOT}/etc/apt/trusted.gpg.d/debian-keyring.gpg"
     curl https://ftp-master.debian.org/keys/release-11.asc | gpg --dearmor >> "${SYSROOT}/etc/apt/trusted.gpg.d/debian-keyring.gpg"
+    curl https://ftp-master.debian.org/keys/archive-key-12.asc | gpg --dearmor >> "${SYSROOT}/etc/apt/trusted.gpg.d/debian-keyring.gpg"
+    curl https://ftp-master.debian.org/keys/release-12.asc | gpg --dearmor >> "${SYSROOT}/etc/apt/trusted.gpg.d/debian-keyring.gpg"
 
     multistrap -f "${TOOLS_DIR}/sysroot_multistrap.cfg" -d "${SYSROOT}"
 

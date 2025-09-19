@@ -108,4 +108,3 @@ fi
 echo "Build environment OK"
 echo_line
 
-exit 0
