@@ -99,12 +99,10 @@ build()
         -opensource \
         -pkg-config \
         -linuxfb \
-        -no-eglfs \
+        -eglfs \
         -opengl es2 \
         -xkbcommon \
         -openssl \
-        -no-gbm \
-        -no-kms \
         -no-directfb \
         -nomake tests \
         -nomake tools \
