@@ -55,24 +55,6 @@ build_sysroot()
 
     multistrap -f "${TOOLS_DIR}/sysroot_multistrap.cfg" -d "${SYSROOT}"
 
-    # Inject Vivante proprietary headers and libraries when available so that
-    # the Qt configure step can build the eglfs_viv backend.
-    VIVANTE_DIR="${TOOLS_DIR}/vivante/${UM_ARCH}"
-    if [ -d "${VIVANTE_DIR}" ]; then
-        if [ -d "${VIVANTE_DIR}/lib" ]; then
-            echo "Copying Vivante libraries into sysroot"
-            mkdir -p "${SYSROOT}/usr/lib"
-            cp -a "${VIVANTE_DIR}/lib/." "${SYSROOT}/usr/lib/"
-            mkdir -p "${SYSROOT}/usr/lib/aarch64-linux-gnu"
-            cp -a "${VIVANTE_DIR}/lib/." "${SYSROOT}/usr/lib/aarch64-linux-gnu/"
-        fi
-        if [ -d "${VIVANTE_DIR}/include" ]; then
-            echo "Copying Vivante headers into sysroot"
-            mkdir -p "${SYSROOT}/usr/include"
-            cp -a "${VIVANTE_DIR}/include/." "${SYSROOT}/usr/include/"
-        fi
-    fi
-
     # Fix up the symlinks in the sysroot, find all links that start with absolute paths
     #  and replace them with relative paths inside the sysroot.
     cd "${SYSROOT}"
@@ -121,8 +103,8 @@ build()
         -opengl es2 \
         -xkbcommon \
         -openssl \
-        -no-gbm \
-        -no-kms \
+        -gbm \
+        -kms \
         -no-directfb \
         -nomake tests \
         -nomake tools \
@@ -170,19 +152,10 @@ build()
     make "${MAKEFLAGS}"
     make "${MAKEFLAGS}" install
 
-    # Ensure Vivante runtime libraries are packaged with Qt so the target
-    # filesystem gets the complete GPU stack.
-    VIVANTE_DIR="${TOOLS_DIR}/vivante/${UM_ARCH}"
-    if [ -d "${VIVANTE_DIR}/lib" ]; then
-        echo "Copying Vivante libraries into Qt package"
-        mkdir -p "${TARGET_DIR}/qt/lib"
-        cp -a "${VIVANTE_DIR}/lib/." "${TARGET_DIR}/qt/lib/"
-    fi
-
-    # Sanity check: the eglfs Vivante device integration must be present after build.
-    EGLFS_VIV_PLUGIN="${TARGET_DIR}/qt/plugins/egldeviceintegrations/libqeglfs_viv.so"
-    if [ ! -f "${EGLFS_VIV_PLUGIN}" ]; then
-        echo "ERROR: libqeglfs_viv.so not found in build output" >&2
+    # Sanity check: the eglfs KMS device integration must be present after build.
+    EGLFS_KMS_PLUGIN="${TARGET_DIR}/qt/plugins/egldeviceintegrations/libqeglfs-kms-integration.so"
+    if [ ! -f "${EGLFS_KMS_PLUGIN}" ]; then
+        echo "ERROR: libqeglfs-kms-integration.so not found in build output" >&2
         exit 1
     fi
 
