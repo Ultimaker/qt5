@@ -29,7 +29,7 @@ export CCACHE_DIR="${BUILD_DIR}/ccache"
 
 PYQT_TARGET_PYTHON_VERSION="3.11"
 
-export PKG_CONFIG_PATH=${SYSROOT}/usr/lib/pkgconfig:${SYSROOT}/usr/lib/arm-linux-gnueabihf/pkgconfig:${SYSROOT}/usr/share/pkgconfig:${SYSROOT}/usr/local/lib/pkgconfig
+export PKG_CONFIG_PATH=${SYSROOT}/usr/lib/pkgconfig:${SYSROOT}/usr/lib/aarch64-linux-gnu/pkgconfig:${SYSROOT}/usr/lib/arm-linux-gnueabihf/pkgconfig:${SYSROOT}/usr/share/pkgconfig:${SYSROOT}/usr/local/lib/pkgconfig
 
 # Add the UM_ARCH (if any) to release version keeping a possible -dev on the most right side
 if [ -n "${UM_ARCH}" ]; then
@@ -99,12 +99,12 @@ build()
         -opensource \
         -pkg-config \
         -linuxfb \
-        -no-eglfs \
+        -eglfs \
         -opengl es2 \
         -xkbcommon \
         -openssl \
-        -no-gbm \
-        -no-kms \
+        -gbm \
+        -kms \
         -no-directfb \
         -nomake tests \
         -nomake tools \
@@ -151,6 +151,13 @@ build()
 
     make "${MAKEFLAGS}"
     make "${MAKEFLAGS}" install
+
+    # Sanity check: the eglfs KMS device integration must be present after build.
+    EGLFS_KMS_PLUGIN="${TARGET_DIR}/qt/plugins/egldeviceintegrations/libqeglfs-kms-integration.so"
+    if [ ! -f "${EGLFS_KMS_PLUGIN}" ]; then
+        echo "ERROR: libqeglfs-kms-integration.so not found in build output" >&2
+        exit 1
+    fi
 
     echo "Finished building."
 }
