@@ -87,7 +87,7 @@ build()
         -ccache \
         -v \
         -platform linux-g++-64 \
-        -device ultimaker-linux-imx8-g++ \
+        -device ultimaker-linux-imx8m-eglfs-g++ \
         -device-option CROSS_COMPILE="${CROSS_COMPILE}" \
         -sysroot "${SYSROOT}" \
         -extprefix "${TARGET_DIR}/qt" \
@@ -98,7 +98,7 @@ build()
         -confirm-license \
         -opensource \
         -pkg-config \
-        -linuxfb \
+        -no-linuxfb \
         -eglfs \
         -opengl es2 \
         -xkbcommon \
@@ -131,7 +131,6 @@ build()
         -skip qtactiveqt \
         -skip qttools \
         -skip qtserialport \
-        -skip qtwayland \
         -skip qtgamepad \
         -skip qtscxml \
         -skip qtfeedback \
@@ -152,11 +151,24 @@ build()
     make "${MAKEFLAGS}"
     make "${MAKEFLAGS}" install
 
+    # Explicitly build and install qtwayland
+    echo "Building qtwayland module..."
+    cd "${BUILD_DIR}/qtwayland"
+    make "${MAKEFLAGS}"
+    make "${MAKEFLAGS}" install
+    cd "${BUILD_DIR}"
+
     # Sanity check: the eglfs KMS device integration must be present after build.
     EGLFS_KMS_PLUGIN="${TARGET_DIR}/qt/plugins/egldeviceintegrations/libqeglfs-kms-integration.so"
     if [ ! -f "${EGLFS_KMS_PLUGIN}" ]; then
         echo "ERROR: libqeglfs-kms-integration.so not found in build output" >&2
         exit 1
+    fi
+
+    # Sanity check: the wayland platform plugin must be present after build.
+    WAYLAND_PLUGIN="${TARGET_DIR}/qt/plugins/platforms/libqwayland-egl.so"
+    if [ ! -f "${WAYLAND_PLUGIN}" ]; then
+        echo "WARNING: libqwayland-egl.so not found in build output" >&2
     fi
 
     echo "Finished building."
