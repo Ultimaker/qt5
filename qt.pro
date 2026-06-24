@@ -99,6 +99,10 @@ for (mod, modules) {
 
     SUBDIRS += $$mod
 }
-SUBDIRS += "qcustomplot"
+# qcustomplot must build after qtbase and qtdeclarative are fully installed.
+# Declare an explicit subdir entry so qmake knows the dependency ordering.
+qcustomplot.subdir = qcustomplot
+qcustomplot.depends = qtbase qtdeclarative
+SUBDIRS += qcustomplot
 
 load(qt_configure)
