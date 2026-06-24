@@ -15,7 +15,9 @@ public:
 
     void paint(QPainter *painter) override;
 
-    Q_INVOKABLE void updateData(const QVariantList& timestamps, const QVariantList& humidity, const QVariantList& dehumidifierStates);
+    Q_INVOKABLE void updateData(const QVariantList& timestamps,
+                                const QVariantList& insideHumidity,
+                                const QVariantList& outsideHumidity);
 
 protected:
     void hoverMoveEvent(QHoverEvent *event) override;
@@ -28,10 +30,9 @@ protected:
 
 private:
     QCustomPlot *m_customPlot;
-    QCPAxisRect *m_axisRectHumidity;
-    QCPAxisRect *m_axisRectDehumidifier;
-    QCPGraph *m_humidityGraph;
-    QCPBars *m_dehumidifierBars;
+    QCPAxisRect *m_axisRect;
+    QCPGraph *m_insideGraph;
+    QCPGraph *m_outsideGraph;
 
 private slots:
     void onReplot();
