@@ -30,7 +30,7 @@ QCustomPlotItem::QCustomPlotItem(QQuickItem *parent)
     yAxis->setVisible(true);
 
     QSharedPointer<QCPAxisTickerDateTime> dateTimeTicker(new QCPAxisTickerDateTime);
-    dateTimeTicker->setDateTimeFormat("MM-dd\nHH:mm");
+    dateTimeTicker->setDateTimeFormat("MM-dd");
     xAxis->setTicker(dateTimeTicker);
 
     QFont smallFont;
@@ -72,9 +72,12 @@ QCustomPlotItem::QCustomPlotItem(QQuickItem *parent)
     m_customPlot->legend->setBorderPen(QPen(QColor(80, 80, 80)));
     m_axisRect->insetLayout()->setInsetAlignment(0, Qt::AlignTop | Qt::AlignRight);
 
-    // Compact margins
-    m_axisRect->setMinimumMargins(QMargins(4, 4, 4, 4));
-    m_customPlot->plotLayout()->setMargins(QMargins(2, 2, 2, 2));
+    // Compact margins — smaller bottom since we dropped the HH:mm row
+    m_axisRect->setMinimumMargins(QMargins(4, 4, 4, 2));
+    m_customPlot->plotLayout()->setMargins(QMargins(2, 2, 2, 0));
+
+    // Layer for state backgrounds — drawn before grid so it stays behind everything
+    m_customPlot->addLayer("statebg", m_customPlot->layer("background"), QCustomPlot::limAbove);
 }
 
 QCustomPlotItem::~QCustomPlotItem()
@@ -94,18 +97,57 @@ void QCustomPlotItem::paint(QPainter *painter)
 
 void QCustomPlotItem::updateData(const QVariantList& timestamps,
                                   const QVariantList& insideHumidity,
-                                  const QVariantList& outsideHumidity)
+                                  const QVariantList& outsideHumidity,
+                                  const QVariantList& dehumidifierStates)
 {
     if (timestamps.isEmpty() || !m_insideGraph || !m_outsideGraph)
         return;
 
     int size = timestamps.size();
-    QVector<double> xData(size), yInside(size), yOutside(size);
+    QVector<double> xData(size), yInside(size), yOutside(size), yStates(size);
 
     for (int i = 0; i < size; ++i) {
         xData[i] = timestamps[i].toDouble();
         yInside[i] = insideHumidity[i].toDouble();
         yOutside[i] = outsideHumidity[i].toDouble();
+        yStates[i] = dehumidifierStates.value(i).toDouble();
+    }
+
+    // State background rectangles
+    for (auto* rect : m_stateRects)
+        m_customPlot->removeItem(rect);
+    m_stateRects.clear();
+
+    // Colors per state: unknown, operational, testing, drying, regenerating, error
+    static const QColor stateColors[6] = {
+        QColor(80,  80,  80,  55),   // 0 unknown      - grey
+        QColor(0,  150,  80,  45),   // 1 operational  - green
+        QColor(0,  120, 200,  45),   // 2 testing      - blue
+        QColor(200, 180,   0,  50),  // 3 drying       - yellow
+        QColor(210, 110,   0,  55),  // 4 regenerating - orange
+        QColor(200,   0,   0,  70),  // 5 error        - red
+    };
+
+    QCPAxis *xAxis = m_axisRect->axis(QCPAxis::atBottom);
+    QCPAxis *yAxis = m_axisRect->axis(QCPAxis::atLeft);
+
+    for (int i = 0; i < size; ++i) {
+        double x0 = xData[i];
+        double x1 = (i + 1 < size) ? xData[i + 1]
+                                    : xData[i] + (size > 1 ? xData[i] - xData[i - 1] : 1800.0);
+        int stateIdx = qBound(0, static_cast<int>(std::round(yStates[i])), 5);
+
+        QCPItemRect *rect = new QCPItemRect(m_customPlot);
+        rect->setLayer("statebg");
+        rect->setClipToAxisRect(true);
+        rect->setClipAxisRect(m_axisRect);
+        rect->topLeft->setAxes(xAxis, yAxis);
+        rect->topLeft->setCoords(x0, 105);
+        rect->bottomRight->setAxes(xAxis, yAxis);
+        rect->bottomRight->setCoords(x1, -5);
+        rect->setPen(Qt::NoPen);
+        rect->setBrush(QBrush(stateColors[stateIdx]));
+        m_stateRects.append(rect);
     }
 
     m_insideGraph->setData(xData, yInside);

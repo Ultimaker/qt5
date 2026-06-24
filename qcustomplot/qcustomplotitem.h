@@ -17,7 +17,8 @@ public:
 
     Q_INVOKABLE void updateData(const QVariantList& timestamps,
                                 const QVariantList& insideHumidity,
-                                const QVariantList& outsideHumidity);
+                                const QVariantList& outsideHumidity,
+                                const QVariantList& dehumidifierStates);
 
 protected:
     void hoverMoveEvent(QHoverEvent *event) override;
@@ -33,6 +34,7 @@ private:
     QCPAxisRect *m_axisRect;
     QCPGraph *m_insideGraph;
     QCPGraph *m_outsideGraph;
+    QList<QCPItemRect*> m_stateRects;
 
 private slots:
     void onReplot();
