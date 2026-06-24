@@ -124,8 +124,8 @@ void QCustomPlotItem::onReplot()
 void QCustomPlotItem::geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry)
 {
     QQuickPaintedItem::geometryChanged(newGeometry, oldGeometry);
-    if (m_customPlot) {
-        m_customPlot->setViewport(QRect(0, 0, newGeometry.width(), newGeometry.height()));
+    if (m_customPlot && newGeometry.width() > 0 && newGeometry.height() > 0) {
+        m_customPlot->setViewport(QRect(0, 0, static_cast<int>(newGeometry.width()), static_cast<int>(newGeometry.height())));
         m_customPlot->replot();
     }
 }
