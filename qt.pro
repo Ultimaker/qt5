@@ -99,5 +99,6 @@ for (mod, modules) {
 
     SUBDIRS += $$mod
 }
+SUBDIRS += "qcustomplot"
 
 load(qt_configure)

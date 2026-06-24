@@ -266,6 +266,9 @@ if [ "${#}" -eq 0 ]; then
 fi
 
 case "${1-}" in
+    sysroot)
+        build_sysroot
+        ;;
     deb)
         build_sysroot
         clean_debian_dir
