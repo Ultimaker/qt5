@@ -18,7 +18,10 @@ rebuild_docker="no"
 
 update_modules()
 {
-    git submodule update --init --recursive --depth 1
+    # Do not recurse: qtwebengine pulls in the entire Chromium source tree
+    # which is gigabytes even at --depth 1. All skipped modules (qtwebengine,
+    # qtlocation/mapboxgl, etc.) are excluded from the build anyway via -skip.
+    git submodule update --init --depth 1
     cd "${SRC_DIR}/qtbase"
     for patch in "${SRC_DIR}/patches/qtbase/"*.patch; do
         if git apply --check "${patch}" > /dev/null 2>&1; then
