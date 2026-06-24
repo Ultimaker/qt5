@@ -120,12 +120,12 @@ void QCustomPlotItem::updateData(const QVariantList& timestamps,
 
     // Colors per state: unknown, operational, testing, drying, regenerating, error
     static const QColor stateColors[6] = {
-        QColor(80,  80,  80,  55),   // 0 unknown      - grey
-        QColor(0,  150,  80,  45),   // 1 operational  - green
-        QColor(0,  120, 200,  45),   // 2 testing      - blue
-        QColor(200, 180,   0,  50),  // 3 drying       - yellow
-        QColor(210, 110,   0,  55),  // 4 regenerating - orange
-        QColor(200,   0,   0,  70),  // 5 error        - red
+        Qt::transparent,              // 0 unknown      - no highlight (normal state)
+        Qt::transparent,              // 1 operational  - no highlight (normal state)
+        Qt::transparent,              // 2 testing      - no highlight (normal state)
+        QColor(0, 200,   0,  50),     // 3 drying       - green
+        QColor(210, 110,   0,  55),   // 4 regenerating - orange
+        QColor(200,   0,   0,  70),   // 5 error        - red
     };
 
     QCPAxis *xAxis = m_axisRect->axis(QCPAxis::atBottom);
