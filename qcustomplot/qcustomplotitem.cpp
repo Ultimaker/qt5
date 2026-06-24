@@ -19,10 +19,9 @@ QCustomPlotItem::QCustomPlotItem(QQuickItem *parent)
     connect(m_customPlot, &QCustomPlot::afterReplot, this, &QCustomPlotItem::onReplot);
 
     m_customPlot->setBackground(QBrush(QColor(26, 26, 26)));
-    m_customPlot->plotLayout()->clear();
 
-    m_axisRect = new QCPAxisRect(m_customPlot);
-    m_customPlot->plotLayout()->addElement(0, 0, m_axisRect);
+    // Use the default axis rect so the legend (already at inset index 0) is valid.
+    m_axisRect = m_customPlot->axisRect();
     m_axisRect->setBackground(QBrush(QColor(36, 36, 36)));
 
     QCPAxis *xAxis = m_axisRect->axis(QCPAxis::atBottom);
@@ -85,12 +84,12 @@ QCustomPlotItem::~QCustomPlotItem()
 
 void QCustomPlotItem::paint(QPainter *painter)
 {
-    if (m_customPlot) {
-        QPixmap pixmap(width(), height());
-        QCPPainter qcpPainter(&pixmap);
-        m_customPlot->toPainter(&qcpPainter, width(), height());
-        painter->drawPixmap(0, 0, pixmap);
-    }
+    if (!m_customPlot || width() <= 0 || height() <= 0)
+        return;
+    QPixmap pixmap(static_cast<int>(width()), static_cast<int>(height()));
+    QCPPainter qcpPainter(&pixmap);
+    m_customPlot->toPainter(&qcpPainter, static_cast<int>(width()), static_cast<int>(height()));
+    painter->drawPixmap(0, 0, pixmap);
 }
 
 void QCustomPlotItem::updateData(const QVariantList& timestamps,
