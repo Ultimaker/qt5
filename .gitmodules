@@ -278,6 +278,3 @@
 	url = https://github.com/qt/qtwebglplugin.git
 	branch = 5.12.3
 	status = addon
-[submodule "qcustomplot"]
-	path = qcustomplot
-	url = https://gitlab.com/ecme2/QCustomPlot.git

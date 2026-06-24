@@ -1,0 +1,2 @@
+module CustomPlot
+plugin qcustomplotplugin
